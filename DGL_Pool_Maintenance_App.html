@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a2540">
+<title>DGL Pool Services</title>
+<style>
+:root{
+  --navy:#0a2540;--teal:#0d7ea0;--teal-lt:#e6f4f8;--pool:#1a9bc4;
+  --green:#1a7a4a;--green-lt:#e8f5ee;--amber:#c47a00;--amber-lt:#fff3cc;
+  --red:#c0392b;--red-lt:#fde8e6;--grey:#64748b;--light:#f0f6fa;
+  --white:#fff;--border:#dde4ea;--r:14px;--sh:0 2px 16px rgba(10,37,64,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--light);color:var(--navy)}
+#app{display:flex;flex-direction:column;height:100%;overflow:hidden}
+
+/* Screens */
+.sc{display:none;flex-direction:column;height:100%;overflow:hidden}
+.sc.on{display:flex}
+
+/* Login */
+#sc-login{background:linear-gradient(160deg,var(--navy) 0%,#0d4a7a 60%,var(--teal) 100%);align-items:center;justify-content:center;padding:32px 20px}
+.login-logo{font-size:56px;margin-bottom:16px}
+.login-title{color:#fff;font-size:24px;font-weight:800;margin-bottom:4px;text-align:center}
+.login-sub{color:rgba(255,255,255,.6);font-size:13px;margin-bottom:28px;text-align:center}
+.login-card{background:#fff;border-radius:var(--r);padding:22px;width:100%;max-width:360px;box-shadow:var(--sh)}
+.login-card h3{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:14px}
+.f{margin-bottom:12px}
+.f label{display:block;font-size:10px;font-weight:700;color:var(--grey);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.f select,.f input,.f textarea{width:100%;padding:12px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;color:var(--navy);background:#fff;outline:none;transition:border .15s;font-family:inherit}
+.f select:focus,.f input:focus{border-color:var(--teal)}
+.f .hint{font-size:10px;color:var(--grey);margin-top:3px}
+.btn-full{width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px}
+.btn-full.teal{background:var(--teal)}
+.btn-full.outline{background:#fff;color:var(--navy);border:1.5px solid var(--border)}
+
+/* Topbar */
+.topbar{background:var(--navy);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.tb-back{background:none;border:none;color:#fff;font-size:20px;padding:2px 6px;cursor:pointer}
+.tb-title{flex:1;font-size:15px;font-weight:700}
+.tb-sub{font-size:10px;color:rgba(255,255,255,.55);display:block;margin-top:1px}
+.tb-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:600;cursor:pointer}
+
+/* Bottom nav */
+.bnav{display:flex;background:#fff;border-top:1px solid var(--border);flex-shrink:0;box-shadow:0 -2px 10px rgba(10,37,64,.06)}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9px 4px 7px;cursor:pointer;border:none;background:none;color:var(--grey);gap:2px;transition:color .13s}
+.nb.on{color:var(--teal)}
+.nb-ico{font-size:21px}
+.nb-lbl{font-size:9px;font-weight:700;letter-spacing:.3px}
+.nb-badge{background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:7px;position:absolute;top:6px;right:calc(50% - 20px)}
+.nb-wrap{position:relative}
+
+/* Scroll area */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+
+/* Cards */
+.card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);margin-bottom:12px;overflow:hidden}
+.card-hdr{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card-hdr h4{font-size:13px;font-weight:700;color:var(--navy)}
+.card-body{padding:14px}
+
+/* Badges */
+.badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700}
+.bg{background:var(--green-lt);color:var(--green)}.br{background:var(--red-lt);color:var(--red)}
+.ba{background:var(--amber-lt);color:var(--amber)}.bb{background:var(--teal-lt);color:var(--teal)}
+.bx{background:#f0f4f8;color:var(--grey)}
+
+/* Section label */
+.sec-lbl{font-size:10px;font-weight:700;color:var(--grey);text-transform:uppercase;letter-spacing:.8px;margin:4px 0 8px;padding:0 2px}
+
+/* HOME */
+.greeting{background:linear-gradient(120deg,var(--navy),#0d4a7a);color:#fff;border-radius:var(--r);padding:16px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.greet-icon{width:46px;height:46px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.stat-card{background:#fff;border-radius:10px;padding:12px 14px;box-shadow:var(--sh);text-align:center}
+.stat-num{font-size:24px;font-weight:800;color:var(--navy);letter-spacing:-1px}
+.stat-lbl{font-size:10px;color:var(--grey);margin-top:2px}
+.stat-card.green .stat-num{color:var(--green)}
+.stat-card.amber .stat-num{color:var(--amber)}
+.stat-card.red .stat-num{color:var(--red)}
+
+/* Schedule visit cards */
+.visit-card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);margin-bottom:10px;overflow:hidden;border-left:4px solid var(--border)}
+.visit-card.scheduled{border-left-color:var(--teal)}
+.visit-card.done{border-left-color:var(--green)}
+.visit-card.missed{border-left-color:var(--red)}
+.visit-card.unscheduled{border-left-color:var(--amber)}
+.vc-body{padding:13px 15px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.vc-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.vc-icon.sched{background:var(--teal-lt)}
+.vc-icon.done{background:var(--green-lt)}
+.vc-icon.missed{background:var(--red-lt)}
+.vc-icon.unsch{background:var(--amber-lt)}
+.vc-info{flex:1;min-width:0}
+.vc-name{font-size:14px;font-weight:700;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vc-meta{font-size:11px;color:var(--grey);margin-top:2px}
+.vc-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.gps-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.gps-dot.locked{background:var(--green)}
+.gps-dot.unlocked{background:var(--amber)}
+.gps-dot.failed{background:var(--red)}
+
+/* GPS banner */
+.gps-banner{padding:8px 12px;border-radius:8px;font-size:11px;font-weight:600;display:none;margin-bottom:10px}
+.gps-banner.show{display:block}
+.gps-banner.ok{background:var(--green-lt);color:var(--green)}
+.gps-banner.warn{background:var(--amber-lt);color:var(--amber)}
+.gps-banner.err{background:var(--red-lt);color:var(--red)}
+.gps-banner.info{background:var(--teal-lt);color:var(--teal)}
+
+/* Form sections */
+.form-sec{background:#fff;border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--sh)}
+.form-sec h4{font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.f.full{grid-column:1/-1}
+
+/* Toggle buttons */
+.tgl-group{display:flex;gap:7px}
+.tgl{flex:1;padding:11px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;transition:all .13s;background:#fff;color:var(--grey);text-align:center}
+.tgl.yes{background:var(--green);border-color:var(--green);color:#fff}
+.tgl.no{background:#f0f4f8;border-color:#c8d4de;color:var(--grey)}
+
+/* Chem pills */
+.pills{display:flex;flex-wrap:wrap;gap:7px}
+.pill{padding:7px 12px;border:1.5px solid var(--border);border-radius:16px;font-size:12px;font-weight:500;color:var(--grey);cursor:pointer;transition:all .13s;background:#fff}
+.pill.on{background:var(--teal);border-color:var(--teal);color:#fff}
+
+/* Issue chips */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:7px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;cursor:pointer;color:var(--grey);background:#fff;transition:all .13s}
+.chip.on{background:var(--red-lt);border-color:var(--red);color:var(--red);font-weight:600}
+
+/* Severity */
+.sev-group{display:flex;gap:7px}
+.sev{flex:1;padding:9px 4px;border:1.5px solid var(--border);border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;text-align:center;background:#fff;transition:all .13s}
+.sev[data-s="Low"].on{background:var(--green-lt);border-color:var(--green);color:var(--green)}
+.sev[data-s="Medium"].on{background:var(--amber-lt);border-color:var(--amber);color:var(--amber)}
+.sev[data-s="Critical"].on{background:var(--red-lt);border-color:var(--red);color:var(--red)}
+
+/* PRF banner */
+.prf-banner{background:var(--red-lt);border:1.5px solid var(--red);border-radius:9px;padding:10px 13px;font-size:12px;color:var(--red);font-weight:600;display:none;margin-bottom:10px}
+.prf-banner.show{display:block}
+
+/* Submit bar */
+.submit-bar{padding:12px 16px;background:#fff;border-top:1px solid var(--border);box-shadow:0 -4px 20px rgba(10,37,64,.1);flex-shrink:0}
+
+/* GPS lock panel */
+.gps-lock-box{background:var(--teal-lt);border:2px solid var(--teal);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.gps-lock-box h4{font-size:13px;font-weight:700;color:var(--teal);margin-bottom:8px}
+.gps-coords{font-family:monospace;font-size:12px;color:var(--navy);background:#fff;border-radius:6px;padding:8px 10px;margin:8px 0}
+.btn-gps{padding:10px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;display:flex;align-items:center;gap:6px;justify-content:center}
+.btn-gps.lock{background:var(--teal);color:#fff;width:100%}
+.btn-gps.reset{background:var(--red-lt);color:var(--red);border:1.5px solid var(--red);width:100%;margin-top:6px}
+
+/* SCHEDULE screen */
+.day-tab{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px}
+.day-btn{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--grey)}
+.day-btn.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.day-btn.today{border-color:var(--teal);color:var(--teal)}
+.day-btn.today.on{background:var(--teal);color:#fff}
+
+/* HISTORY */
+.hist-entry{background:#fff;border-radius:var(--r);padding:12px 14px;margin-bottom:8px;box-shadow:var(--sh);border-left:4px solid var(--teal)}
+.hist-entry.prf{border-left-color:var(--red)}
+.hist-entry.gps-fail{border-left-color:var(--amber)}
+.hist-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+
+/* GPS MAP mini */
+.gps-map{width:100%;height:160px;border-radius:10px;border:1px solid var(--border);overflow:hidden;background:#e8f0fe;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--grey);margin:8px 0}
+
+/* Toast */
+#toast{position:fixed;bottom:80px;left:14px;right:14px;padding:12px 16px;border-radius:var(--r);font-size:13px;font-weight:600;transform:translateY(120%);transition:transform .3s;z-index:200;box-shadow:var(--sh);color:#fff;text-align:center}
+#toast.show{transform:translateY(0)}
+#toast.ok{background:var(--green)}#toast.err{background:var(--red)}
+#toast.warn{background:var(--amber)}#toast.info{background:var(--navy)}
+
+/* Spinner overlay */
+#spinner{position:fixed;inset:0;background:rgba(10,37,64,.6);display:none;align-items:center;justify-content:center;z-index:300}
+#spinner.show{display:flex}
+.spin-box{background:#fff;border-radius:14px;padding:24px 28px;text-align:center}
+.spin{width:32px;height:32px;border:3px solid var(--teal-lt);border-top-color:var(--teal);border-radius:50%;animation:sp .8s linear infinite;margin:0 auto 12px}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ══ LOGIN ══ -->
+<div class="sc on" id="sc-login">
+  <div class="login-logo">🏊</div>
+  <div class="login-title">DGL Pool Services</div>
+  <div class="login-sub">Maintenance Team Portal</div>
+  <div class="login-card">
+    <h3>Sign in</h3>
+    <div class="f">
+      <label>Your Name</label>
+      <select id="l-name">
+
+        <option value="">Select your name...</option>
+        <option>Abraham Bortequaye</option>
+        <option>Agyenim Boateng</option>
+        <option>Appiah Paddy</option>
+        <option>Daniel Azelivo</option>
+        <option>Joseph Borketey</option>
+        <option>Obed Adokwey</option>
+        <option>Stephen Buabeng</option>
+      </select>
+    </div>
+    <div class="f">
+      <label>Google Sheets URL <span style="color:var(--grey);font-weight:400">(optional)</span></label>
+      <input id="l-url" type="url" placeholder="https://script.google.com/macros/s/..." autocomplete="off" spellcheck="false">
+      <div class="hint">Paste once. Leave blank to work offline.</div>
+    </div>
+    <button class="btn-full" onclick="doLogin()">Sign In →</button>
+  </div>
+</div>
+
+<!-- ══ MAIN APP ══ -->
+<div class="sc" id="sc-main">
+
+  <!-- HOME tab -->
+  <div class="sc on" id="tab-home">
+    <div class="topbar">
+      <div style="flex:1">
+        <div class="tb-title" id="home-name">DGL Pool Services</div>
+        <span class="tb-sub" id="home-date"></span>
+      </div>
+      <button class="tb-btn" onclick="switchTab('log',null)">+ Log Visit</button>
+    </div>
+    <div class="scroll" style="padding:14px">
+      <div class="greeting">
+        <div class="greet-icon">🏊</div>
+        <div>
+          <div style="font-size:16px;font-weight:800" id="greet-text">Good morning!</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.65)" id="greet-bike"></div>
+        </div>
+      </div>
+
+      <!-- Today's stats -->
+      <div class="stats-row" id="home-stats"></div>
+
+      <!-- Today's schedule -->
+      <div class="sec-lbl">📅 Today's Schedule</div>
+      <div id="today-schedule"></div>
+
+      <!-- Unscheduled option -->
+      <div style="margin-top:4px;margin-bottom:16px">
+        <button class="btn-full outline" style="padding:11px;font-size:13px" onclick="switchTab('log',null)">+ Log Unscheduled Visit</button>
+      </div>
+    </div>
+    <div class="bnav" id="bnav-home">
+      <button class="nb on" onclick="setTab('home',this)"><span class="nb-ico">🏠</span><span class="nb-lbl">Home</span></button>
+      <button class="nb" onclick="setTab('schedule',this)"><span class="nb-ico">📅</span><span class="nb-lbl">Schedule</span></button>
+      <button class="nb" onclick="setTab('history',this)"><span class="nb-ico">📋</span><span class="nb-lbl">History</span></button>
+      <button class="nb" onclick="setTab('settings',this)"><span class="nb-ico">⚙️</span><span class="nb-lbl">Settings</span></button>
+    </div>
+  </div>
+
+  <!-- SCHEDULE tab -->
+  <div class="sc" id="tab-schedule">
+    <div class="topbar">
+      <div class="tb-title">Weekly Schedule</div>
+      <button class="tb-btn" onclick="refreshSchedule()">↻</button>
+    </div>
+    <div class="scroll" style="padding:14px">
+      <div class="day-tab" id="day-tabs"></div>
+      <div id="schedule-content"></div>
+    </div>
+    <div class="bnav">
+      <button class="nb" onclick="setTab('home',this)"><span class="nb-ico">🏠</span><span class="nb-lbl">Home</span></button>
+      <button class="nb on" onclick="setTab('schedule',this)"><span class="nb-ico">📅</span><span class="nb-lbl">Schedule</span></button>
+      <button class="nb" onclick="setTab('history',this)"><span class="nb-ico">📋</span><span class="nb-lbl">History</span></button>
+      <button class="nb" onclick="setTab('settings',this)"><span class="nb-ico">⚙️</span><span class="nb-lbl">Settings</span></button>
+    </div>
+  </div>
+
+  <!-- LOG VISIT tab -->
+  <div class="sc" id="tab-log">
+    <div class="topbar">
+      <button class="tb-back" onclick="switchTab('home',null)">←</button>
+      <div>
+        <div class="tb-title" id="log-title">Log Visit</div>
+        <span class="tb-sub" id="log-sub"></span>
+      </div>
+    </div>
+    <div class="scroll" style="padding:14px;padding-bottom:90px">
+
+      <!-- GPS status -->
+      <div class="gps-banner" id="gps-banner"></div>
+
+      <!-- Visit details -->
+      <div class="form-sec">
+        <h4>📍 Visit Details</h4>
+        <div class="f">
+          <label>Client <span style="color:var(--red)">*</span></label>
+          <select id="f-client" style="font-size:16px;padding:13px 12px" onchange="onClientChange(this.value)">
+            <option value="">— Tap to select client —</option>
+          </select>
+          <div id="client-info-card" style="display:none;margin-top:7px;background:var(--teal-lt);border-radius:8px;padding:9px 11px;font-size:12px;color:var(--navy)"></div>
+        </div>
+        <div class="form-row">
+          <div class="f"><label>Date</label><input type="date" id="f-date"></div>
+          <div class="f"><label>Bike</label><input type="text" id="f-bike" readonly style="background:var(--light);color:var(--grey)"></div>
+        </div>
+        <div class="form-row">
+          <div class="f"><label>Time In</label><input type="time" id="f-ti"></div>
+          <div class="f"><label>Time Out</label><input type="time" id="f-to"></div>
+        </div>
+        <!-- Schedule match indicator -->
+        <div id="sched-match" style="display:none;padding:7px 10px;border-radius:7px;font-size:11px;font-weight:600;margin-top:6px"></div>
+      </div>
+
+      <!-- GPS Verification -->
+      <div class="form-sec">
+        <h4>📡 GPS Location</h4>
+        <div id="gps-status-box">
+          <div style="color:var(--grey);font-size:12px;text-align:center;padding:10px">Detecting location...</div>
+        </div>
+        <button class="btn-full teal" style="margin-top:8px;padding:11px;font-size:13px" onclick="captureGPS()">📡 Capture My Location</button>
+
+        <!-- GPS Lock setup for this client -->
+        <div id="gps-lock-section" style="display:none;margin-top:12px">
+          <div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:6px">Client GPS Lock</div>
+          <div id="gps-lock-box"></div>
+        </div>
+      </div>
+
+      <!-- Pool cleaned -->
+      <div class="form-sec">
+        <h4>🧹 Pool Cleaned?</h4>
+        <div class="tgl-group">
+          <button class="tgl" id="cl-yes" onclick="setTgl('cleaned','Yes')">✓ Yes</button>
+          <button class="tgl" id="cl-no"  onclick="setTgl('cleaned','No')">✗ No</button>
+        </div>
+      </div>
+
+      <!-- Chemicals -->
+      <div class="form-sec">
+        <h4>🧪 Chemical Status</h4>
+        <div class="f">
+          <label>Overall Status</label>
+          <select id="f-chem" style="font-size:15px;padding:11px" onchange="checkPRF()">
+            <option value="OK">✅ OK — All good</option>
+            <option value="Low">⚠️ Low — Needs top-up</option>
+            <option value="Empty">🚨 Empty — Urgent</option>
+          </select>
+        </div>
+        <div class="form-row" style="margin-top:8px">
+          <div class="f"><label>pH Level <span style="font-weight:400;color:var(--grey)">(7.2–7.6)</span></label><input type="number" id="f-ph" step="0.1" min="0" max="14" placeholder="7.4" style="font-size:16px;text-align:center"></div>
+          <div class="f"><label>Chlorine ppm <span style="font-weight:400;color:var(--grey)">(1–3)</span></label><input type="number" id="f-cl" step="0.1" min="0" max="20" placeholder="2.0" style="font-size:16px;text-align:center"></div>
+        </div>
+        <div class="f" style="margin-top:10px">
+          <label>Chemicals Added</label>
+          <div class="pills" id="chem-pills">
+            <div class="pill" onclick="togglePill(this)" data-v="Chlorine">Chlorine</div>
+            <div class="pill" onclick="togglePill(this)" data-v="pH Reducer">pH Reducer</div>
+            <div class="pill" onclick="togglePill(this)" data-v="pH Increaser">pH Increaser</div>
+            <div class="pill" onclick="togglePill(this)" data-v="Algaecide">Algaecide</div>
+            <div class="pill" onclick="togglePill(this)" data-v="Flocculant">Flocculant</div>
+            <div class="pill" onclick="togglePill(this)" data-v="Salt">Salt</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Issues -->
+      <div class="form-sec">
+        <h4>⚠️ Issues Found</h4>
+        <div class="tgl-group" style="margin-bottom:12px">
+          <button class="tgl" id="iss-yes" onclick="setTgl('issue','Yes');document.getElementById('issue-detail').style.display='block'">⚠️ Yes</button>
+          <button class="tgl" id="iss-no"  onclick="setTgl('issue','No');document.getElementById('issue-detail').style.display='none'">✓ None</button>
+        </div>
+        <div id="issue-detail" style="display:none">
+          <div class="prf-banner" id="prf-banner">🔔 PRF will be auto-flagged — supervisor notified</div>
+          <div class="f"><label>Issue Type(s)</label>
+            <div class="chips" id="issue-chips">
+              <div class="chip" onclick="toggleChip(this)" data-v="Pool Pump">Pool Pump</div>
+              <div class="chip" onclick="toggleChip(this)" data-v="Filter">Filter</div>
+              <div class="chip" onclick="toggleChip(this)" data-v="Heater">Heater</div>
+              <div class="chip" onclick="toggleChip(this)" data-v="Leak">Leak</div>
+              <div class="chip" onclick="toggleChip(this)" data-v="Electrical">Electrical</div>
+              <div class="chip" onclick="toggleChip(this)" data-v="Plumbing">Plumbing</div>
+              <div class="chip" onclick="toggleChip(this)" data-v="Tile/Civil">Tile/Civil</div>
+              <div class="chip" onclick="toggleChip(this)" data-v="Lighting">Lighting</div>
+              <div class="chip" onclick="toggleChip(this)" data-v="Water Pump">Water Pump</div>
+              <div class="chip" onclick="toggleChip(this)" data-v="Other">Other</div>
+            </div>
+          </div>
+          <div class="f" style="margin-top:8px"><label>Severity</label>
+            <div class="sev-group">
+              <button class="sev" data-s="Low"      onclick="setSev('Low')">🟢 Low</button>
+              <button class="sev" data-s="Medium"   onclick="setSev('Medium')">🟡 Medium</button>
+              <button class="sev" data-s="Critical" onclick="setSev('Critical')">🔴 Critical</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remarks -->
+      <div class="form-sec">
+        <h4>📝 Remarks</h4>
+        <textarea id="f-remarks" rows="3" placeholder="Observations, client requests, notes..." style="font-size:14px"></textarea>
+      </div>
+
+    </div>
+    <div class="submit-bar">
+      <button class="btn-full" id="submit-btn" onclick="submitLog()">Submit Visit Log →</button>
+    </div>
+  </div>
+
+  <!-- HISTORY tab -->
+  <div class="sc" id="tab-history">
+    <div class="topbar">
+      <div class="tb-title">Visit History</div>
+      <button class="tb-btn" onclick="loadHistory()">↻ Refresh</button>
+    </div>
+    <div class="scroll" style="padding:14px" id="history-list">
+      <div style="text-align:center;padding:30px;color:var(--grey);font-size:13px">Loading...</div>
+    </div>
+    <div class="bnav">
+      <button class="nb" onclick="setTab('home',this)"><span class="nb-ico">🏠</span><span class="nb-lbl">Home</span></button>
+      <button class="nb" onclick="setTab('schedule',this)"><span class="nb-ico">📅</span><span class="nb-lbl">Schedule</span></button>
+      <button class="nb on" onclick="setTab('history',this)"><span class="nb-ico">📋</span><span class="nb-lbl">History</span></button>
+      <button class="nb" onclick="setTab('settings',this)"><span class="nb-ico">⚙️</span><span class="nb-lbl">Settings</span></button>
+    </div>
+  </div>
+
+  <!-- SETTINGS tab -->
+  <div class="sc" id="tab-settings">
+    <div class="topbar"><div class="tb-title">Settings</div></div>
+    <div class="scroll" style="padding:14px">
+
+      <!-- Account -->
+      <div class="sec-lbl">Account</div>
+      <div class="card">
+        <div class="card-body">
+          <div style="font-size:14px;font-weight:700" id="st-name">—</div>
+          <div style="font-size:12px;color:var(--grey);margin-top:2px" id="st-bike">—</div>
+        </div>
+      </div>
+
+      <!-- Connection -->
+      <div class="sec-lbl">Google Sheets Connection</div>
+      <div class="card">
+        <div class="card-body">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <div class="gps-dot" id="conn-dot" style="width:10px;height:10px"></div>
+            <span style="font-size:13px;font-weight:600" id="conn-txt">Not connected</span>
+          </div>
+          <div style="font-size:11px;color:var(--grey);margin-bottom:10px;word-break:break-all" id="st-url">No URL set</div>
+          <input id="st-url-input" type="url" placeholder="Paste Apps Script URL..." style="width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;margin-bottom:8px;outline:none">
+          <button class="btn-full teal" style="padding:10px;font-size:13px" onclick="saveURL()">Save &amp; Test Connection</button>
+        </div>
+      </div>
+
+      <!-- GPS Locks -->
+      <div class="sec-lbl">Client GPS Locks</div>
+      <div class="card">
+        <div class="card-body" id="gps-locks-list">
+          <div style="font-size:12px;color:var(--grey)">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Offline queue -->
+      <div class="sec-lbl">Offline Queue</div>
+      <div class="card">
+        <div class="card-body" style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:14px;font-weight:700" id="queue-count">0 pending</div>
+            <div style="font-size:11px;color:var(--grey)">Logs waiting to sync</div>
+          </div>
+          <button class="btn-full teal" style="width:auto;padding:9px 16px;font-size:12px" onclick="flushQueue()">Submit Now</button>
+        </div>
+      </div>
+
+      <!-- Sign out -->
+      <div class="card" style="margin-top:8px">
+        <div class="card-body">
+          <button class="btn-full" style="background:var(--red-lt);color:var(--red);border:1.5px solid var(--red)" onclick="signOut()">Sign Out</button>
+        </div>
+      </div>
+
+      <div style="text-align:center;font-size:11px;color:var(--grey);padding:16px">DGL Pool Services v2.0 · GPS-enabled</div>
+    </div>
+    <div class="bnav">
+      <button class="nb" onclick="setTab('home',this)"><span class="nb-ico">🏠</span><span class="nb-lbl">Home</span></button>
+      <button class="nb" onclick="setTab('schedule',this)"><span class="nb-ico">📅</span><span class="nb-lbl">Schedule</span></button>
+      <button class="nb" onclick="setTab('history',this)"><span class="nb-ico">📋</span><span class="nb-lbl">History</span></button>
+      <button class="nb on" onclick="setTab('settings',this)"><span class="nb-ico">⚙️</span><span class="nb-lbl">Settings</span></button>
+    </div>
+  </div>
+
+</div><!-- /sc-main -->
+</div><!-- /app -->
+
+<div id="toast"></div>
+<div id="spinner"><div class="spin-box"><div class="spin"></div><div style="font-size:13px;color:var(--navy);font-weight:600" id="spin-msg">Please wait...</div></div></div>
+
+<script>
+
+// ═══════════════════════════════════════════════════════════════
+// CLIENT DATA (from Maintenance_Client_Register)
+// ═══════════════════════════════════════════════════════════════
+const CLIENTS = [{"client": "Ama Maria", "location": "East Airport", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Stephen Buabeng", "bike": "Bicycle 1", "contractStart": "2026-03-01", "contractEnd": "2026-12-30", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mr Benjamen Ntim", "location": "East Airport", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Stephen Buabeng", "bike": "Bicycle 1", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Skemp Hospitality", "location": "East Airport", "poolType": "Traditional", "package": "Standard", "frequency": "Thrice Per Week", "team": "Stephen Buabeng", "bike": "Bicycle 1", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 3, 5], "visitsPerMonth": 12, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "RGEMC", "location": "East Airport", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Thrice Per Week", "team": "Stephen Buabeng", "bike": "Bicycle 1", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 3, 5], "visitsPerMonth": 12, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Dr Rasheed", "location": "East Airport", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Stephen Buabeng", "bike": "Bicycle 1", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mrs R Yakpo", "location": "East Airport", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Stephen Buabeng", "bike": "Bicycle 1", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mr Shadrack Ahin", "location": "East Airport", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Stephen Buabeng", "bike": "Bicycle 1", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mr D. Frimpong", "location": "East Airport", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Stephen Buabeng", "bike": "Bicycle 1", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mrs R Botchwey", "location": "East Airport", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Stephen Buabeng", "bike": "Bicycle 1", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Darko Villa", "location": "Dome", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Once Per week", "team": "Agyenim Boateng", "bike": "GR 364-M-24", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1], "visitsPerMonth": 4, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Bishop Addy", "location": "Nana Krom", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Once Per week", "team": "Agyenim Boateng", "bike": "GR 364-M-24", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1], "visitsPerMonth": 4, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Lawyer Akyianu", "location": "Trassaco", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Agyenim Boateng", "bike": "GR 364-M-24", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mad Gamrat", "location": "East Lagon", "poolType": "Traditional", "package": "Standard", "frequency": "Twice Per Week", "team": "Agyenim Boateng", "bike": "GR 364-M-24", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mad G. Lassey", "location": "North Lagon", "poolType": "Traditional", "package": "Standard", "frequency": "Twice Per Week", "team": "Agyenim Boateng", "bike": "GR 364-M-24", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mr Niraj", "location": "Tesano", "poolType": "Traditional", "package": "Standard", "frequency": "Once Per week", "team": "Agyenim Boateng", "bike": "GR 364-M-24", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1], "visitsPerMonth": 4, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Nana Tamaklo", "location": "Dzowulu", "poolType": "Traditional", "package": "Standard", "frequency": "Once Per week", "team": "Agyenim Boateng", "bike": "GR 364-M-24", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1], "visitsPerMonth": 4, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mr Wissam Raad", "location": "East Lagon", "poolType": "Traditional", "package": "Standard", "frequency": "Twice Per Week", "team": "Agyenim Boateng", "bike": "GR 364-M-24", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mr Ahmed", "location": "East Lagon", "poolType": "Traditional", "package": "Standard", "frequency": "Twice Per Week", "team": "Agyenim Boateng", "bike": "GR 364-M-24", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "s", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Sam Gambra", "location": "Trassaco", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Abraham Bortequaye", "bike": "Bicycle 2", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Hon Vicky Bright", "location": "Trassaco", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Abraham Bortequaye", "bike": "Bicycle 2", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mr Joseph Hayford", "location": "Agrigano", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Thrice Per Week", "team": "Abraham Bortequaye", "bike": "Bicycle 2", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 3, 5], "visitsPerMonth": 12, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mad Linda Bozombel", "location": "Trassaco", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Abraham Bortequaye", "bike": "Bicycle 2", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mad Juliet Hassan", "location": "Airport Hills", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Daniel Azelivo", "bike": "Not Assigned", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mad Julian Alotey", "location": "Airport Hills", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Once Per week", "team": "Daniel Azelivo", "bike": "Not Assigned", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1], "visitsPerMonth": 4, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mr George Asante", "location": "Airport Hills", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Daniel Azelivo", "bike": "Not Assigned", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Hon moses Asaga", "location": "Airport Hills", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Daniel Azelivo", "bike": "Not Assigned", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mr Ras Boateng", "location": "Airport Hills", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Daniel Azelivo", "bike": "Not Assigned", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mr Justi Nelson", "location": "Airport Hills", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Once Per week", "team": "Daniel Azelivo", "bike": "Not Assigned", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1], "visitsPerMonth": 4, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mr douglas Frimpong", "location": "Airport Hills", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Daniel Azelivo", "bike": "Not Assigned", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mad Araba", "location": "Tse Addo", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Once Per week", "team": "Daniel Azelivo", "bike": "Not Assigned", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1], "visitsPerMonth": 4, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mr Samuel Addo", "location": "Tse Addo", "poolType": "Traditional", "package": "Standard", "frequency": "Twice Per Week", "team": "Daniel Azelivo", "bike": "Not Assigned", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Latter Day Saint", "location": "Ridge", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Thrice Per Week", "team": "Joseph Borketey", "bike": "GR 2541-M-22", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 3, 5], "visitsPerMonth": 12, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Total MD", "location": "Ridge", "poolType": "Traditional", "package": "Standard", "frequency": "Twice Per Week", "team": "Joseph Borketey", "bike": "GR 2541-M-22", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Absa  Bank", "location": "Airport Residential", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Thrice Per Week", "team": "Joseph Borketey", "bike": "GR 2541-M-22", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 3, 5], "visitsPerMonth": 12, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Total Om", "location": "Airport Residential", "poolType": "Traditional", "package": "Standard", "frequency": "Twice Per Week", "team": "Joseph Borketey", "bike": "GR 2541-M-22", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Total Alima 1", "location": "Airport Residential", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Joseph Borketey", "bike": "GR 2541-M-22", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Total Alima 3", "location": "Airport Residential", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Joseph Borketey", "bike": "GR 2541-M-22", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Standchat Bank", "location": "Airport Residential", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Joseph Borketey", "bike": "GR 2541-M-22", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mr Kelly Gadzekpo", "location": "Airport Residential", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Joseph Borketey", "bike": "GR 2541-M-22", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Palms by Eagle", "location": "Airport Residential", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Joseph Borketey", "bike": "GR 2541-M-22", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "The palms", "location": "Airport Residential", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Joseph Borketey", "bike": "GR 2541-M-22", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Cranleigh Resources", "location": "cantonment", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Appiah Paddy", "bike": "Bicycle 3", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Kab Resources", "location": "cantonment", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Appiah Paddy", "bike": "Bicycle 3", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mrs Mohinani", "location": "cantonment", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Appiah Paddy", "bike": "Bicycle 3", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mrs Mac Cofie", "location": "cantonment", "poolType": "Traditional", "package": "Standard", "frequency": "Twice Per Week", "team": "Appiah Paddy", "bike": "Bicycle 3", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Embassy Of France", "location": "cantonment", "poolType": "Traditional", "package": "Standard", "frequency": "Thrice Per Week", "team": "Appiah Paddy", "bike": "Bicycle 3", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 3, 5], "visitsPerMonth": 12, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Prof Adomako", "location": "cantonment", "poolType": "Traditional", "package": "Standard", "frequency": "Once Per week", "team": "Appiah Paddy", "bike": "Bicycle 3", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1], "visitsPerMonth": 4, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mad Sylvia Kwakwa Tema", "location": "cantonment", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Obed Adokwey", "bike": "GR 3820-M-24", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mr Larry Chinbuah", "location": "Tema", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Obed Adokwey", "bike": "GR 3820-M-24", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mr Gerba", "location": "Tema", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Obed Adokwey", "bike": "GR 3820-M-24", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "MR Owusu Mensah", "location": "Tema", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Obed Adokwey", "bike": "GR 3820-M-24", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mrs Chaway", "location": "Tema", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Obed Adokwey", "bike": "GR 3820-M-24", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Dr Somiah", "location": "Tema", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Obed Adokwey", "bike": "GR 3820-M-24", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mr Alfonso", "location": "Tema", "poolType": "Traditional", "package": "Standard", "frequency": "Twice Per Week", "team": "Obed Adokwey", "bike": "GR 3820-M-24", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "May Fair Apt", "location": "Tema", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Obed Adokwey", "bike": "GR 3820-M-24", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mr Obri Yeboah", "location": "Spintex Kotobabi", "poolType": "Desjoyaux", "package": "Standard", "frequency": "Twice Per Week", "team": "Obed Adokwey", "bike": "GR 3820-M-24", "contractStart": "2026-03-01", "contractEnd": "2026-12-31", "paymentStatus": "not paid", "notes": "", "scheduleDays": [1, 4], "visitsPerMonth": 8, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}, {"client": "Mr Justin Cofie", "location": "", "poolType": "Desjoyaux", "package": "", "frequency": "", "team": "Agyenim Boateng", "bike": "", "contractStart": "", "contractEnd": "", "paymentStatus": "", "notes": "", "scheduleDays": [1], "visitsPerMonth": 4, "monthlyCharge": 0, "chargePerVisit": 0, "gpsLat": null, "gpsLng": null, "gpsRadius": 100}];
+
+// Frequency → visits per month + default days (0=Sun,1=Mon,...,6=Sat)
+const FREQ_MAP = {
+  'Once Per week':   { visits:4,  days:[1] },
+  'Twice Per Week':  { visits:8,  days:[1,4] },
+  'Thrice Per Week': { visits:12, days:[1,3,5] },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// APP STATE
+// ═══════════════════════════════════════════════════════════════
+const APP = { name:'', url:'', team:'', bike:'' };
+let GPS_STATE   = { lat:null, lng:null, accuracy:null, timestamp:null, watching:false };
+let FORM_STATE  = { cleaned:'', issue:'', severity:'', chems:[], issues:[] };
+let OFFLINE_Q   = JSON.parse(localStorage.getItem('dgl_offline_q')||'[]');
+// Client GPS locks stored locally per device (also synced to sheets)
+let GPS_LOCKS   = JSON.parse(localStorage.getItem('dgl_gps_locks')||'{}');
+// Schedule overrides fetched from Google Sheets (admin can change days)
+let SCHEDULE    = JSON.parse(localStorage.getItem('dgl_schedule')||'{}');
+// Local log cache
+let LOG_CACHE   = JSON.parse(localStorage.getItem('dgl_logs')||'[]');
+
+// ═══════════════════════════════════════════════════════════════
+// STARTUP
+// ═══════════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('dgl_session_v2');
+  if (saved) {
+    const s = JSON.parse(saved);
+    if (s.name) {
+      Object.assign(APP, s);
+      show('sc-main');
+      setTimeout(() => { initApp(); syncAll(); }, 150);
+      return;
+    }
+  }
+  show('sc-login');
+});
+
+window.addEventListener('online',  () => { flushQueue(); syncAll(); });
+window.addEventListener('offline', () => updateConnDot(false));
+
+function show(id) {
+  document.querySelectorAll('.sc').forEach(s => s.classList.remove('on'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('on');
+  // When showing main app, ensure home tab is visible
+  if (id === 'sc-main') {
+    document.querySelectorAll('#sc-main .sc').forEach(s => s.classList.remove('on'));
+    const home = document.getElementById('tab-home');
+    if (home) home.classList.add('on');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════════════════════════
+async function doLogin() {
+  const name = document.getElementById('l-name').value.trim();
+  const url  = document.getElementById('l-url').value.trim();
+  if (!name) { toast('Select your name','err'); return; }
+
+  // Find team from client data
+  const myClients = CLIENTS.filter(c => c.team === name);
+  const bike = myClients.length ? myClients[0].bike : '';
+
+  APP.name = name; APP.url = url; APP.team = name; APP.bike = bike;
+  localStorage.setItem('dgl_session_v2', JSON.stringify({name, url, team:name, bike}));
+
+  if (url && url.includes('script.google.com')) {
+    showSpinner('Connecting...');
+    try {
+      const r = await fetch(url + '?action=ping', {cache:'no-store'});
+      const j = await r.json();
+      hideSpinner();
+      if (!j.ok) throw new Error();
+      toast('Connected ✓','ok');
+    } catch(e) { hideSpinner(); toast('Saved — working offline','warn'); }
+  }
+
+  show('sc-main');
+  initApp();
+  syncAll();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+function initApp() {
+  // Header
+  const h = new Date().getHours();
+  const gr = h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  document.getElementById('greet-text').textContent = gr + ', ' + APP.name.split(' ')[0] + '!';
+  document.getElementById('greet-bike').textContent = APP.bike ? '🚲 ' + APP.bike : '';
+  document.getElementById('home-name').textContent = 'DGL Pool Services';
+  document.getElementById('home-date').textContent = new Date().toLocaleDateString('en-GB',
+    {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+
+  // Settings
+  document.getElementById('st-name').textContent = APP.name;
+  document.getElementById('st-bike').textContent = APP.bike || '';
+  document.getElementById('st-url').textContent  = APP.url || 'No URL set';
+  if (APP.url) document.getElementById('st-url-input').value = APP.url;
+
+  updateQueueCount();
+  updateConnDot(false);
+  renderHomeSchedule();
+  renderGPSLocksList();
+  buildWeekTabs();
+  startGPSWatch();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TAB NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function setTab(tab, btn) {
+  document.querySelectorAll('#sc-main .sc').forEach(s => s.classList.remove('on'));
+  document.getElementById('tab-' + tab).classList.add('on');
+  if (tab === 'history')  loadHistory();
+  if (tab === 'schedule') renderScheduleTab();
+  if (tab === 'settings') renderGPSLocksList();
+}
+
+function switchTab(tab, clientName) {
+  if (tab === 'log') openLogForm(clientName);
+  else setTab(tab, null);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCHEDULE ENGINE
+// ═══════════════════════════════════════════════════════════════
+function getMyClients() {
+  return CLIENTS.filter(c => c.team === APP.team);
+}
+
+function getScheduleForDate(dateStr) {
+  // Returns clients scheduled for this date
+  const d = new Date(dateStr + 'T00:00:00');
+  const dow = d.getDay(); // 0=Sun, 1=Mon ... 6=Sat
+  const myClients = getMyClients();
+  return myClients.filter(c => {
+    // Check if we have a schedule override from the dashboard
+    const key = c.client;
+    if (SCHEDULE[key] && SCHEDULE[key].days) {
+      return SCHEDULE[key].days.includes(dow);
+    }
+    // Use default from frequency
+    const fm = FREQ_MAP[c.frequency];
+    return fm ? fm.days.includes(dow) : false;
+  });
+}
+
+function isLoggedToday(clientName, dateStr) {
+  return LOG_CACHE.some(l => l.clientName === clientName && l.serviceDate === dateStr);
+}
+
+function renderHomeSchedule() {
+  const today = new Date().toISOString().slice(0,10);
+  const scheduled = getScheduleForDate(today);
+  const myClients = getMyClients();
+
+  // Stats
+  const done   = scheduled.filter(c => isLoggedToday(c.client, today)).length;
+  const missed = scheduled.length - done;
+  const extra  = LOG_CACHE.filter(l => l.serviceDate === today &&
+    !scheduled.find(c => c.client === l.clientName)).length;
+
+  document.getElementById('home-stats').innerHTML = `
+    <div class="stat-card green"><div class="stat-num">${done}</div><div class="stat-lbl">Done today</div></div>
+    <div class="stat-card ${missed>0?'amber':''}"><div class="stat-num">${scheduled.length}</div><div class="stat-lbl">Scheduled</div></div>
+    <div class="stat-card ${extra>0?'amber':''}"><div class="stat-num">${extra}</div><div class="stat-lbl">Unscheduled</div></div>`;
+
+  const container = document.getElementById('today-schedule');
+  if (!scheduled.length) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--grey);font-size:13px">No visits scheduled for today</div>';
+    return;
+  }
+
+  container.innerHTML = scheduled.map(c => {
+    const done2 = isLoggedToday(c.client, today);
+    const locked = !!GPS_LOCKS[c.client];
+    const statusClass = done2 ? 'done' : 'scheduled';
+    const icon = done2 ? '✅' : '🏊';
+    const iconClass = done2 ? 'done' : 'sched';
+    return `<div class="visit-card ${statusClass}" onclick="${done2 ? '' : `switchTab('log','${c.client.replace(/'/g,"\\'")}')` }">
+      <div class="vc-body">
+        <div class="vc-icon ${iconClass}">${icon}</div>
+        <div class="vc-info">
+          <div class="vc-name">${c.client}</div>
+          <div class="vc-meta">${c.location} · ${c.frequency}</div>
+        </div>
+        <div class="vc-right">
+          <span class="badge ${done2?'bg':'bb'}">${done2?'Done':'Due'}</span>
+          <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--grey)">
+            <div class="gps-dot ${locked?'locked':'unlocked'}"></div>
+            ${locked?'GPS ✓':'No GPS'}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCHEDULE TAB
+// ═══════════════════════════════════════════════════════════════
+function buildWeekTabs() {
+  const tabs = document.getElementById('day-tabs');
+  const today = new Date();
+  tabs.innerHTML = '';
+  for (let i = -1; i <= 5; i++) {
+    const d = new Date(today); d.setDate(today.getDate() + i);
+    const ds = d.toISOString().slice(0,10);
+    const isToday = ds === today.toISOString().slice(0,10);
+    const lbl = isToday ? 'Today' : d.toLocaleDateString('en-GB',{weekday:'short'}) + ' ' + d.getDate();
+    const btn = document.createElement('button');
+    btn.className = 'day-btn' + (isToday?' today on':'');
+    btn.textContent = lbl;
+    btn.dataset.date = ds;
+    btn.onclick = function() {
+      document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('on'));
+      this.classList.add('on');
+      renderScheduleDay(ds);
+    };
+    tabs.appendChild(btn);
+  }
+  renderScheduleDay(today.toISOString().slice(0,10));
+}
+
+function renderScheduleTab() { buildWeekTabs(); }
+
+function renderScheduleDay(dateStr) {
+  const scheduled = getScheduleForDate(dateStr);
+  const myClients = getMyClients();
+  const d = new Date(dateStr + 'T00:00:00');
+
+  let html = `<div style="font-size:11px;font-weight:700;color:var(--grey);margin-bottom:10px">${d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</div>`;
+
+  if (!scheduled.length) {
+    html += '<div style="text-align:center;padding:24px;color:var(--grey);font-size:13px">No visits scheduled</div>';
+    document.getElementById('schedule-content').innerHTML = html;
+    return;
+  }
+
+  html += scheduled.map(c => {
+    const done = isLoggedToday(c.client, dateStr);
+    const locked = GPS_LOCKS[c.client];
+    const fm = FREQ_MAP[c.frequency] || {visits:4};
+    const charge = SCHEDULE[c.client]?.monthlyCharge || c.monthlyCharge || 0;
+    const visitCharge = charge ? (charge / fm.visits) : 0;
+    return `<div class="visit-card ${done?'done':'scheduled'}">
+      <div class="vc-body" onclick="${done?'':` switchTab('log','${c.client.replace(/'/g,"\\'")}')`}">
+        <div class="vc-icon ${done?'done':'sched'}">${done?'✅':'🏊'}</div>
+        <div class="vc-info">
+          <div class="vc-name">${c.client}</div>
+          <div class="vc-meta">${c.location} · ${c.poolType}</div>
+          <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">
+            <span class="badge bx">${c.frequency}</span>
+            ${charge?`<span class="badge bx">GHS ${visitCharge.toFixed(0)}/visit</span>`:''}
+            <span class="badge ${locked?'bg':'ba'}">${locked?'📡 GPS ✓':'📡 No GPS'}</span>
+          </div>
+        </div>
+        <div class="vc-right">
+          <span class="badge ${done?'bg':'bb'}">${done?'Done':'Due'}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('schedule-content').innerHTML = html;
+}
+
+function refreshSchedule() { buildWeekTabs(); }
+
+// ═══════════════════════════════════════════════════════════════
+// GPS ENGINE
+// ═══════════════════════════════════════════════════════════════
+let gpsWatchId = null;
+
+function startGPSWatch() {
+  if (!navigator.geolocation) return;
+  if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
+  gpsWatchId = navigator.geolocation.watchPosition(
+    pos => {
+      GPS_STATE = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        accuracy: Math.round(pos.coords.accuracy),
+        timestamp: new Date().toISOString(),
+        watching: true
+      };
+    },
+    err => { GPS_STATE.watching = false; },
+    { enableHighAccuracy: true, maximumAge: 30000, timeout: 15000 }
+  );
+}
+
+function captureGPS() {
+  if (!navigator.geolocation) {
+    toast('GPS not available on this device','err'); return;
+  }
+  showSpinner('Getting location...');
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      hideSpinner();
+      GPS_STATE = {
+        lat: pos.coords.latitude, lng: pos.coords.longitude,
+        accuracy: Math.round(pos.coords.accuracy),
+        timestamp: new Date().toISOString(), watching: true
+      };
+      renderGPSBox();
+      const client = document.getElementById('f-client').value;
+      if (client) checkGPSAgainstLock(client);
+    },
+    err => {
+      hideSpinner();
+      const msg = {1:'Permission denied',2:'Position unavailable',3:'Timeout'}[err.code]||'GPS error';
+      toast(msg + ' — log allowed but flagged','warn');
+      updateGPSBanner('warn','⚠ GPS: ' + msg + ' — visit will be flagged');
+    },
+    { enableHighAccuracy:true, timeout:15000, maximumAge:0 }
+  );
+}
+
+function renderGPSBox() {
+  const box = document.getElementById('gps-status-box');
+  if (!GPS_STATE.lat) {
+    box.innerHTML = '<div style="color:var(--grey);font-size:12px;text-align:center;padding:10px">No GPS fix yet. Tap Capture button.</div>';
+    return;
+  }
+  box.innerHTML = `
+    <div style="background:var(--green-lt);border-radius:8px;padding:9px 11px">
+      <div style="font-size:12px;font-weight:700;color:var(--green)">📡 GPS Fix</div>
+      <div style="font-family:monospace;font-size:11px;color:var(--navy);margin-top:4px">
+        ${GPS_STATE.lat.toFixed(6)}, ${GPS_STATE.lng.toFixed(6)}<br>
+        Accuracy: ±${GPS_STATE.accuracy}m
+      </div>
+    </div>`;
+}
+
+function checkGPSAgainstLock(clientName) {
+  const lock = GPS_LOCKS[clientName];
+  const banner = document.getElementById('gps-banner');
+
+  if (!lock) {
+    banner.className = 'gps-banner show info';
+    banner.textContent = '📡 No GPS lock set for this client. Log this visit to set the location.';
+    return { passed: true, flagged: false };
+  }
+
+  if (!GPS_STATE.lat) {
+    banner.className = 'gps-banner show warn';
+    banner.textContent = '⚠ Could not get GPS — visit will be logged but flagged.';
+    return { passed: false, flagged: true };
+  }
+
+  const dist = haversine(GPS_STATE.lat, GPS_STATE.lng, lock.lat, lock.lng);
+  const radius = lock.radius || 100;
+
+  if (dist <= radius) {
+    banner.className = 'gps-banner show ok';
+    banner.textContent = `✓ Location verified — ${Math.round(dist)}m from client site (within ${radius}m)`;
+    return { passed: true, flagged: false };
+  } else {
+    banner.className = 'gps-banner show err';
+    banner.textContent = `🚨 GPS MISMATCH — You are ${Math.round(dist)}m away (limit: ${radius}m). Visit will be flagged for review.`;
+    return { passed: false, flagged: true };
+  }
+}
+
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371000; // metres
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 +
+            Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// Lock a client's GPS location
+function lockClientGPS(clientName) {
+  if (!GPS_STATE.lat) {
+    toast('Get GPS fix first — tap Capture button','err'); return;
+  }
+  const lock = {
+    lat: GPS_STATE.lat, lng: GPS_STATE.lng,
+    accuracy: GPS_STATE.accuracy, radius: 100,
+    lockedBy: APP.name, lockedAt: new Date().toISOString()
+  };
+  GPS_LOCKS[clientName] = lock;
+  localStorage.setItem('dgl_gps_locks', JSON.stringify(GPS_LOCKS));
+  // Push lock to Google Sheets
+  pushRow('GPS_Locks', { clientName, ...lock });
+  renderGPSLockSection(clientName);
+  renderGPSLocksList();
+  toast(`GPS lock set for ${clientName} ✓`,'ok');
+  checkGPSAgainstLock(clientName);
+}
+
+function unlockClientGPS(clientName) {
+  if (!confirm(`Remove GPS lock for ${clientName}?`)) return;
+  delete GPS_LOCKS[clientName];
+  localStorage.setItem('dgl_gps_locks', JSON.stringify(GPS_LOCKS));
+  renderGPSLockSection(clientName);
+  renderGPSLocksList();
+  toast('GPS lock removed','warn');
+}
+
+function renderGPSLockSection(clientName) {
+  const sec = document.getElementById('gps-lock-section');
+  const box = document.getElementById('gps-lock-box');
+  if (!clientName) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+
+  const lock = GPS_LOCKS[clientName];
+  if (lock) {
+    box.innerHTML = `
+      <div class="gps-lock-box">
+        <h4>📡 GPS Locked</h4>
+        <div class="gps-coords">${lock.lat.toFixed(6)}, ${lock.lng.toFixed(6)}<br>Radius: ${lock.radius}m · By: ${lock.lockedBy}</div>
+        <button class="btn-gps lock" onclick="lockClientGPS('${clientName.replace(/'/g,"\\'")}')">🔄 Update Lock Location</button>
+        <button class="btn-gps reset" onclick="unlockClientGPS('${clientName.replace(/'/g,"\\'")}')">🗑 Remove Lock</button>
+      </div>`;
+  } else {
+    box.innerHTML = `
+      <div class="gps-lock-box" style="border-color:var(--amber);background:var(--amber-lt)">
+        <h4 style="color:var(--amber)">📡 No GPS Lock Set</h4>
+        <div style="font-size:12px;color:var(--navy);margin-bottom:8px">Lock this client's location now. Future visits will be verified against this position.</div>
+        ${GPS_STATE.lat ? `<div class="gps-coords">${GPS_STATE.lat.toFixed(6)}, ${GPS_STATE.lng.toFixed(6)} · ±${GPS_STATE.accuracy}m</div>` : '<div style="font-size:11px;color:var(--grey);margin-bottom:8px">Get GPS fix first ↑</div>'}
+        <button class="btn-gps lock" style="background:var(--amber)" onclick="lockClientGPS('${clientName.replace(/'/g,"\\'")}')">📍 Lock This Location</button>
+      </div>`;
+  }
+}
+
+function renderGPSLocksList() {
+  const list = document.getElementById('gps-locks-list');
+  const myClients = getMyClients();
+  if (!myClients.length) { list.innerHTML = '<div style="font-size:12px;color:var(--grey)">No clients</div>'; return; }
+
+  list.innerHTML = myClients.map(c => {
+    const lock = GPS_LOCKS[c.client];
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-size:13px;font-weight:600">${c.client}</div>
+        <div style="font-size:10px;color:var(--grey)">${lock ? `${lock.lat.toFixed(4)}, ${lock.lng.toFixed(4)} · ±${lock.radius}m` : 'No lock set'}</div>
+      </div>
+      <div class="gps-dot ${lock?'locked':'unlocked'}" style="width:12px;height:12px"></div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LOG FORM
+// ═══════════════════════════════════════════════════════════════
+function openLogForm(clientName) {
+  // Reset state
+  FORM_STATE = { cleaned:'', issue:'', severity:'', chems:[], issues:[] };
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+  document.querySelectorAll('.tgl').forEach(b => { b.className = 'tgl'; });
+  document.querySelectorAll('.sev').forEach(s => s.classList.remove('on'));
+  document.getElementById('issue-detail').style.display = 'none';
+  document.getElementById('prf-banner').classList.remove('show');
+  document.getElementById('f-remarks').value = '';
+  document.getElementById('f-ph').value = '';
+  document.getElementById('f-cl').value = '';
+  document.getElementById('f-chem').value = 'OK';
+  document.getElementById('gps-banner').className = 'gps-banner';
+  document.getElementById('gps-lock-section').style.display = 'none';
+
+  // Set date/time
+  const now = new Date();
+  document.getElementById('f-date').value = now.toISOString().slice(0,10);
+  document.getElementById('f-ti').value   = now.toTimeString().slice(0,5);
+  document.getElementById('f-to').value   = '';
+
+  // Populate client dropdown
+  const sel = document.getElementById('f-client');
+  const myClients = getMyClients();
+  sel.innerHTML = '<option value="">— Select client —</option>';
+  myClients.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c.client; o.textContent = c.client; sel.appendChild(o);
+  });
+  // If fallback needed (no clients for team)
+  if (!myClients.length) {
+    CLIENTS.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.client; o.textContent = c.client; sel.appendChild(o);
+    });
+  }
+
+  if (clientName) {
+    sel.value = clientName;
+    onClientChange(clientName);
+  } else {
+    document.getElementById('f-bike').value = '';
+    document.getElementById('client-info-card').style.display = 'none';
+    document.getElementById('sched-match').style.display = 'none';
+  }
+
+  // Show GPS status
+  renderGPSBox();
+  if (clientName && GPS_STATE.lat) checkGPSAgainstLock(clientName);
+
+  setTab('log', null);
+}
+
+function onClientChange(clientName) {
+  const c = CLIENTS.find(x => x.client === clientName);
+  const card = document.getElementById('client-info-card');
+
+  if (!c) { card.style.display='none'; document.getElementById('f-bike').value=''; return; }
+
+  document.getElementById('f-bike').value = c.bike || '';
+  document.getElementById('log-title').textContent = clientName;
+  document.getElementById('log-sub').textContent = c.location || '';
+
+  card.style.display = 'block';
+  const charge = SCHEDULE[clientName]?.monthlyCharge || c.monthlyCharge || 0;
+  const fm = FREQ_MAP[c.frequency] || {visits:4};
+  const visitCharge = charge ? (charge / fm.visits).toFixed(0) : '—';
+  card.innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <span class="badge bb">${c.frequency}</span>
+      <span class="badge bx">${c.poolType}</span>
+      <span class="badge bx">${c.location}</span>
+      ${charge ? `<span class="badge bg">GHS ${visitCharge}/visit</span>` : ''}
+    </div>`;
+
+  // Check if scheduled today
+  const today = new Date().toISOString().slice(0,10);
+  const sched = getScheduleForDate(today);
+  const isScheduled = sched.some(s => s.client === clientName);
+  const sm = document.getElementById('sched-match');
+  sm.style.display = 'block';
+  if (isScheduled) {
+    sm.style.background = 'var(--green-lt)'; sm.style.color = 'var(--green)';
+    sm.textContent = '✓ Scheduled visit — matches today\'s schedule';
+  } else {
+    sm.style.background = 'var(--amber-lt)'; sm.style.color = 'var(--amber)';
+    sm.textContent = '⚠ Unscheduled visit — not on today\'s schedule (will be flagged)';
+  }
+
+  // GPS check
+  renderGPSLockSection(clientName);
+  if (GPS_STATE.lat) checkGPSAgainstLock(clientName);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FORM HELPERS
+// ═══════════════════════════════════════════════════════════════
+function setTgl(field, val) {
+  FORM_STATE[field] = val;
+  if (field === 'cleaned') {
+    document.getElementById('cl-yes').className = 'tgl' + (val==='Yes'?' yes':'');
+    document.getElementById('cl-no').className  = 'tgl' + (val==='No'?' no':'');
+  }
+  if (field === 'issue') {
+    document.getElementById('iss-yes').className = 'tgl' + (val==='Yes'?' yes':'');
+    document.getElementById('iss-no').className  = 'tgl' + (val==='No'?' no':'');
+    checkPRF();
+  }
+}
+function togglePill(el) {
+  el.classList.toggle('on');
+  const v = el.dataset.v;
+  FORM_STATE.chems = el.classList.contains('on')
+    ? [...FORM_STATE.chems, v]
+    : FORM_STATE.chems.filter(x => x !== v);
+}
+function toggleChip(el) {
+  el.classList.toggle('on');
+  const v = el.dataset.v;
+  FORM_STATE.issues = el.classList.contains('on')
+    ? [...FORM_STATE.issues, v]
+    : FORM_STATE.issues.filter(x => x !== v);
+}
+function setSev(val) {
+  FORM_STATE.severity = val;
+  document.querySelectorAll('.sev').forEach(s => s.classList.toggle('on', s.dataset.s === val));
+}
+function checkPRF() {
+  const bad = document.getElementById('f-chem').value !== 'OK' || FORM_STATE.issue === 'Yes';
+  document.getElementById('prf-banner').classList.toggle('show', bad);
+}
+function updateGPSBanner(type, msg) {
+  const b = document.getElementById('gps-banner');
+  b.className = 'gps-banner show ' + type;
+  b.textContent = msg;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SUBMIT LOG
+// ═══════════════════════════════════════════════════════════════
+async function submitLog() {
+  const client  = document.getElementById('f-client').value;
+  const date    = document.getElementById('f-date').value;
+  const timeIn  = document.getElementById('f-ti').value;
+  if (!client) { toast('Select a client','err'); return; }
+  if (!date)   { toast('Set the date','err');   return; }
+  if (!timeIn) { toast('Set Time In','err');    return; }
+  if (!FORM_STATE.cleaned) { toast('Record if pool was cleaned','err'); return; }
+
+  const c = CLIENTS.find(x => x.client === client) || {};
+  const today = new Date().toISOString().slice(0,10);
+  const isScheduled = getScheduleForDate(date).some(s => s.client === client);
+
+  // GPS verification
+  const gpsCheck = GPS_LOCKS[client]
+    ? checkGPSAgainstLock(client)
+    : { passed: true, flagged: false };
+  const gpsFlag  = !GPS_STATE.lat || gpsCheck.flagged;
+  const gpsFail  = GPS_LOCKS[client] && gpsCheck.flagged;
+
+  const chemStatus = document.getElementById('f-chem').value;
+  const prfAuto = (chemStatus !== 'OK' || FORM_STATE.issue === 'Yes') ? 'Yes' : 'No';
+
+  const row = {
+    'Service Date':         date,
+    'Maintenance Team':     APP.team,
+    'Bike ID':              document.getElementById('f-bike').value,
+    'Client Name':          client,
+    'Location/Area':        c.location || '',
+    'Time In':              timeIn,
+    'Time Out':             document.getElementById('f-to').value,
+    'Pool Cleaned (Y/N)':   FORM_STATE.cleaned,
+    'Chemical Status':      chemStatus,
+    'Chemical 1':           FORM_STATE.chems[0] || '',
+    'Chemical 2':           FORM_STATE.chems[1] || '',
+    'Chemical 3':           FORM_STATE.chems[2] || '',
+    'pH Level':             document.getElementById('f-ph').value,
+    'Chlorine Level':       document.getElementById('f-cl').value,
+    'Issue Reported (Y/N)': FORM_STATE.issue || 'No',
+    'Issue Type 1':         FORM_STATE.issues[0] || '',
+    'Issue Type 2':         FORM_STATE.issues[1] || '',
+    'Severity':             FORM_STATE.severity || '',
+    'PRF Required (Auto)':  prfAuto,
+    'PRF Generated (Y/N)':  'No',
+    'Remarks':              document.getElementById('f-remarks').value,
+    'GPS Lat':              GPS_STATE.lat || '',
+    'GPS Lng':              GPS_STATE.lng || '',
+    'GPS Accuracy':         GPS_STATE.accuracy || '',
+    'GPS Verified':         GPS_LOCKS[client] ? (gpsFail ? 'FAILED' : 'PASSED') : 'NO_LOCK',
+    'GPS Distance (m)':     GPS_LOCKS[client] && GPS_STATE.lat
+      ? Math.round(haversine(GPS_STATE.lat, GPS_STATE.lng, GPS_LOCKS[client].lat, GPS_LOCKS[client].lng))
+      : '',
+    'Scheduled Visit':      isScheduled ? 'Yes' : 'No',
+    'GPS Flag':             gpsFlag ? 'Yes' : 'No',
+    'Submitted By':         APP.name,
+    'Submitted At':         new Date().toISOString(),
+  };
+
+  // Auto-lock GPS on first verified visit to this client
+  if (!GPS_LOCKS[client] && GPS_STATE.lat && FORM_STATE.cleaned === 'Yes') {
+    const lock = { lat:GPS_STATE.lat, lng:GPS_STATE.lng, accuracy:GPS_STATE.accuracy,
+                   radius:100, lockedBy:APP.name, lockedAt:new Date().toISOString() };
+    GPS_LOCKS[client] = lock;
+    localStorage.setItem('dgl_gps_locks', JSON.stringify(GPS_LOCKS));
+    pushRow('GPS_Locks', { clientName:client, ...lock });
+    toast('📍 GPS location auto-locked for ' + client,'info');
+  }
+
+  // Save locally
+  const localLog = { ...row, clientName:client, serviceDate:date };
+  LOG_CACHE.unshift(localLog);
+  if (LOG_CACHE.length > 200) LOG_CACHE.splice(200);
+  localStorage.setItem('dgl_logs', JSON.stringify(LOG_CACHE));
+
+  // Submit
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = 'Submitting...';
+
+  try {
+    if (APP.url) {
+      const res = await fetch(APP.url, { method:'POST',
+        body: JSON.stringify({ action:'submitLog', data:row }) });
+      const j = await res.json();
+      if (!j.ok) throw new Error(j.error);
+    } else throw new Error('No URL');
+  } catch(e) {
+    OFFLINE_Q.push({ data:row, queuedAt:new Date().toISOString() });
+    localStorage.setItem('dgl_offline_q', JSON.stringify(OFFLINE_Q));
+    updateQueueCount();
+  }
+
+  btn.disabled = false; btn.textContent = 'Submit Visit Log →';
+
+  // Show result
+  let msg = '✅ Visit logged!';
+  if (gpsFail) msg = '⚠ Logged — GPS mismatch flagged for review';
+  else if (!isScheduled) msg = '⚠ Logged — unscheduled visit noted';
+  else if (prfAuto === 'Yes') msg = '🔔 Logged — PRF required';
+  toast(msg, gpsFail?'warn':'ok');
+
+  renderHomeSchedule();
+  setTab('home', null);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════════════════════════════
+async function loadHistory() {
+  const list = document.getElementById('history-list');
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--grey);font-size:12px">Loading...</div>';
+
+  let logs = [];
+  if (APP.url) {
+    try {
+      const r = await fetch(APP.url, {method:'POST', cache:'no-store',
+        body: JSON.stringify({action:'getLogs', team:APP.team, limit:40})});
+      const j = await r.json();
+      if (j.ok && j.data?.logs) {
+        updateConnDot(true);
+        logs = j.data.logs;
+      }
+    } catch(e) { updateConnDot(false); }
+  }
+  if (!logs.length) logs = LOG_CACHE;
+
+  if (!logs.length) {
+    list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--grey);font-size:13px">No visit history yet</div>';
+    return;
+  }
+
+  list.innerHTML = logs.slice(0,40).map(r => {
+    const client = r['Client Name'] || r.clientName || '';
+    const date   = (r['Service Date'] || r.serviceDate || '').slice(0,10);
+    const team   = r['Maintenance Team'] || r.maintenanceTeam || '';
+    const cleaned = r['Pool Cleaned (Y/N)'] || r.poolCleaned || '';
+    const chem   = r['Chemical Status'] || r.chemicalStatus || '';
+    const issue  = r['Issue Reported (Y/N)'] || r.issueReported || '';
+    const prf    = r['PRF Required (Auto)'] || r.prfRequired || '';
+    const gpsV   = r['GPS Verified'] || '';
+    const gpsF   = r['GPS Flag'] === 'Yes' || r.gpsFlag;
+    const sched  = r['Scheduled Visit'] || '';
+
+    const cls = gpsF ? 'gps-fail' : prf==='Yes' ? 'prf' : '';
+    return `<div class="hist-entry ${cls}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="font-weight:700;font-size:13px">${client}</div>
+        <div style="font-size:10px;color:var(--grey)">${date}</div>
+      </div>
+      <div style="font-size:11px;color:var(--grey);margin-top:2px">${team}</div>
+      <div class="hist-chips">
+        <span class="badge ${cleaned==='Yes'?'bg':'ba'}">${cleaned==='Yes'?'✓ Cleaned':'✗ Not Cleaned'}</span>
+        <span class="badge ${chem==='OK'?'bg':chem==='Low'?'ba':'br'}">${chem}</span>
+        ${issue==='Yes' ? '<span class="badge br">⚠ Issue</span>' : ''}
+        ${prf==='Yes'   ? '<span class="badge br">🔔 PRF</span>'  : ''}
+        ${sched==='No'  ? '<span class="badge ba">Unscheduled</span>' : ''}
+        ${gpsV==='PASSED' ? '<span class="badge bg">📡 GPS ✓</span>' : ''}
+        ${gpsV==='FAILED' ? '<span class="badge br">🚨 GPS Fail</span>' : ''}
+        ${gpsV==='NO_LOCK' ? '<span class="badge bx">📡 No Lock</span>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SYNC / OFFLINE
+// ═══════════════════════════════════════════════════════════════
+async function syncAll() {
+  if (!APP.url) return;
+  updateConnDot(false);
+  // Use POST for all requests — GET params get stripped
+  try {
+    const r = await fetch(APP.url, {method:'POST', cache:'no-store',
+      body: JSON.stringify({action:'getSchedule', team:APP.team})});
+    const j = await r.json();
+    if (j.ok && j.data) {
+      SCHEDULE = j.data;
+      localStorage.setItem('dgl_schedule', JSON.stringify(SCHEDULE));
+    }
+  } catch(e) {}
+  try {
+    const r = await fetch(APP.url, {method:'POST', cache:'no-store',
+      body: JSON.stringify({action:'getGPSLocks', team:APP.team})});
+    const j = await r.json();
+    if (j.ok && j.data) {
+      Object.assign(GPS_LOCKS, j.data);
+      localStorage.setItem('dgl_gps_locks', JSON.stringify(GPS_LOCKS));
+      renderGPSLocksList();
+    }
+  } catch(e) {}
+  updateConnDot(true);
+  await flushQueue();
+}
+
+async function flushQueue() {
+  if (!APP.url || !OFFLINE_Q.length || !navigator.onLine) return;
+  const q = [...OFFLINE_Q]; OFFLINE_Q = [];
+  let ok = 0;
+  for (const item of q) {
+    try {
+      const r = await fetch(APP.url, {method:'POST', body:JSON.stringify({action:'submitLog',data:item.data})});
+      const j = await r.json();
+      if (j.ok) ok++; else OFFLINE_Q.push(item);
+    } catch(e) { OFFLINE_Q.push(item); }
+  }
+  localStorage.setItem('dgl_offline_q', JSON.stringify(OFFLINE_Q));
+  updateQueueCount();
+  if (ok) toast(`${ok} offline log(s) synced ✓`,'ok');
+}
+
+async function pushRow(sheet, data) {
+  if (!APP.url) return;
+  try {
+    fetch(APP.url, {method:'POST',
+      body: JSON.stringify({action:'submitLog', sheet, data, user:APP.name})});
+  } catch(e) {}
+}
+
+function updateQueueCount() {
+  document.getElementById('queue-count').textContent = OFFLINE_Q.length + ' pending';
+}
+function updateConnDot(live) {
+  const d = document.getElementById('conn-dot');
+  const t = document.getElementById('conn-txt');
+  d.className = 'gps-dot ' + (live?'locked':'unlocked');
+  t.textContent = live ? '● Live · Google Sheets' : APP.url ? 'Offline · Queue mode' : 'No URL — local only';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════════════════
+async function saveURL() {
+  const url = document.getElementById('st-url-input').value.trim();
+  if (!url || !url.includes('script.google.com')) { toast('Paste a valid Apps Script URL','err'); return; }
+  showSpinner('Testing connection...');
+  try {
+    const r = await fetch(url+'?action=ping',{cache:'no-store'});
+    const j = await r.json();
+    hideSpinner();
+    if (j.ok) {
+      APP.url = url;
+      localStorage.setItem('dgl_session_v2', JSON.stringify({
+        name:APP.name, url:APP.url, team:APP.team, bike:APP.bike }));
+      document.getElementById('st-url').textContent = url;
+      updateConnDot(true);
+      toast('Connected ✓','ok');
+      syncAll();
+    } else throw new Error();
+  } catch(e) { hideSpinner(); toast('Could not connect — check URL','err'); }
+}
+
+function signOut() {
+  if (!confirm('Sign out?')) return;
+  localStorage.removeItem('dgl_session_v2');
+  APP.name = ''; APP.url = ''; APP.team = ''; APP.bike = '';
+  show('sc-login');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════════
+function showSpinner(msg) {
+  document.getElementById('spin-msg').textContent = msg||'Please wait...';
+  document.getElementById('spinner').classList.add('show');
+}
+function hideSpinner() { document.getElementById('spinner').classList.remove('show'); }
+
+let toastT;
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = {ok:'var(--green)',err:'var(--red)',warn:'var(--amber)',info:'var(--navy)'}[type]||'var(--navy)';
+  el.className = 'show';
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.className = '', 4000);
+}
+
+</script>
+</body>
+</html>

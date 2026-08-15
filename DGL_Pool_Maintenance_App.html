@@ -538,13 +538,25 @@ let LOG_CACHE   = JSON.parse(localStorage.getItem('dgl_logs')||'[]');
 window.addEventListener('load', () => {
   const saved = localStorage.getItem('dgl_session_v2');
   if (saved) {
-    const s = JSON.parse(saved);
-    if (s.name) {
-      Object.assign(APP, s);
-      show('sc-main');
-      setTimeout(() => { initApp(); syncAll(); }, 150);
-      return;
-    }
+    try {
+      const s = JSON.parse(saved);
+      // Always pre-fill URL so it never appears blank
+      if (s.url) {
+        const urlEl = document.getElementById('l-url');
+        if (urlEl) urlEl.value = s.url;
+      }
+      if (s.name) {
+        const nameEl = document.getElementById('l-name');
+        if (nameEl) nameEl.value = s.name;
+      }
+      // Auto-login if valid session
+      if (s.name && s.url) {
+        Object.assign(APP, s);
+        show('sc-main');
+        setTimeout(() => { initApp(); syncAll(); }, 150);
+        return;
+      }
+    } catch(e) { localStorage.removeItem('dgl_session_v2'); }
   }
   show('sc-login');
 });
@@ -568,31 +580,31 @@ function show(id) {
 // LOGIN
 // ═══════════════════════════════════════════════════════════════
 async function doLogin() {
-  const name = document.getElementById('l-name').value.trim();
-  const url  = document.getElementById('l-url').value.trim();
-  if (!name) { toast('Select your name','err'); return; }
-
-  // Find team from client data
-  const myClients = CLIENTS.filter(c => c.team === name);
-  const bike = myClients.length ? myClients[0].bike : '';
-
-  APP.name = name; APP.url = url; APP.team = name; APP.bike = bike;
-  localStorage.setItem('dgl_session_v2', JSON.stringify({name, url, team:name, bike}));
-
-  if (url && url.includes('script.google.com')) {
-    showSpinner('Connecting...');
-    try {
-      const r = await fetch(url + '?action=ping', {cache:'no-store'});
-      const j = await r.json();
-      hideSpinner();
-      if (!j.ok) throw new Error();
-      toast('Connected ✓','ok');
-    } catch(e) { hideSpinner(); toast('Saved — working offline','warn'); }
+  try {
+    const nameEl = document.getElementById('l-name');
+    const urlEl  = document.getElementById('l-url');
+    const name   = nameEl ? nameEl.value.trim() : '';
+    const url    = urlEl  ? urlEl.value.trim()  : '';
+    if (!name) { toast('Select your name first','err'); return; }
+    const myClients = CLIENTS.filter(c => c.team === name);
+    const bike = myClients.length ? (myClients[0].bike||'') : '';
+    APP.name = name; APP.url = url; APP.team = name; APP.bike = bike;
+    localStorage.setItem('dgl_session_v2', JSON.stringify({name, url, team:name, bike}));
+    if (url && url.includes('script.google.com')) {
+      showSpinner('Connecting...');
+      try {
+        const r = await fetch(url, {method:'POST', body:JSON.stringify({action:'ping'}), cache:'no-store'});
+        const j = await r.json();
+        hideSpinner();
+        toast(j.ok ? 'Connected ✓' : 'Working offline','ok');
+      } catch(e) { hideSpinner(); toast('Working offline','warn'); }
+    }
+    show('sc-main');
+    setTimeout(() => { initApp(); syncAll(); }, 150);
+  } catch(err) {
+    console.error('Login error:', err);
+    toast('Login failed — try again','err');
   }
-
-  show('sc-main');
-  initApp();
-  syncAll();
 }
 
 // ═══════════════════════════════════════════════════════════════

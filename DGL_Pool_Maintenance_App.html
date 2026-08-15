@@ -1378,20 +1378,33 @@ async function syncAll() {
   await flushQueue();
 }
 
-async function flushQueue() {
-  if (!APP.url || !OFFLINE_Q.length || !navigator.onLine) return;
-  const q = [...OFFLINE_Q]; OFFLINE_Q = [];
+async async function flushQueue() {
+  if (!APP.url || !OFFLINE_Q.length) return;
+  const btn = document.querySelector('[onclick="flushQueue()"]');
+  if (btn) { btn.disabled=true; btn.textContent='Submitting...'; }
+  const q = [...OFFLINE_Q];
+  OFFLINE_Q = [];
   let ok = 0;
   for (const item of q) {
     try {
-      const r = await fetch(APP.url, {method:'POST', body:JSON.stringify({action:'submitLog',data:item.data})});
+      const r = await fetch(APP.url, {method:'POST',
+        body: JSON.stringify({
+          action: 'submitLog',
+          sheet:  'Daily_Maintenance_Log',
+          data:   item.data || item,
+          user:   APP.name
+        })
+      });
       const j = await r.json();
-      if (j.ok) ok++; else OFFLINE_Q.push(item);
+      if (j.ok) ok++;
+      else OFFLINE_Q.push(item);
     } catch(e) { OFFLINE_Q.push(item); }
   }
   localStorage.setItem('dgl_offline_q', JSON.stringify(OFFLINE_Q));
   updateQueueCount();
-  if (ok) toast(`${ok} offline log(s) synced ✓`,'ok');
+  if (btn) { btn.disabled=false; btn.textContent='Submit Now'; }
+  if (ok) toast(ok + ' offline log(s) synced ✓', 'ok');
+  else if (OFFLINE_Q.length) toast('Submit failed — check connection', 'err');
 }
 
 async function pushRow(sheet, data) {

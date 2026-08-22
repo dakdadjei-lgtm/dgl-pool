@@ -674,25 +674,40 @@ function switchTab(tab, clientName) {
 // ═══════════════════════════════════════════════════════════════
 // SCHEDULE ENGINE
 // ═══════════════════════════════════════════════════════════════
-let MOB_VISIT_TYPE = 'scheduled';
+function getMobVisitType() {
+  // Read directly from button state - single source of truth
+  const sBtn = document.getElementById('mob-type-sched');
+  if (!sBtn) return 'scheduled';
+  return sBtn.dataset.active === 'true' ? 'scheduled' : 'unscheduled';
+}
 
 function setMobVisitType(type) {
-  MOB_VISIT_TYPE = type;
   const sBtn = document.getElementById('mob-type-sched');
   const uBtn = document.getElementById('mob-type-unsched');
+  if (!sBtn || !uBtn) return;
+
   if (type === 'scheduled') {
-    sBtn.style.background = 'var(--navy)'; sBtn.style.color = '#fff'; sBtn.style.borderColor = 'var(--navy)';
-    uBtn.style.background = '#fff'; uBtn.style.color = 'var(--grey)'; uBtn.style.borderColor = 'var(--border)';
+    sBtn.dataset.active = 'true';
+    uBtn.dataset.active = 'false';
+    sBtn.style.cssText = 'flex:1;padding:10px;border-radius:8px;border:2px solid var(--navy);background:var(--navy);color:#fff;font-size:13px;font-weight:700;cursor:pointer';
+    uBtn.style.cssText = 'flex:1;padding:10px;border-radius:8px;border:2px solid var(--border);background:#fff;color:var(--grey);font-size:13px;font-weight:700;cursor:pointer';
   } else {
-    uBtn.style.background = 'var(--teal)'; uBtn.style.color = '#fff'; uBtn.style.borderColor = 'var(--teal)';
-    sBtn.style.background = '#fff'; sBtn.style.color = 'var(--grey)'; sBtn.style.borderColor = 'var(--border)';
+    sBtn.dataset.active = 'false';
+    uBtn.dataset.active = 'true';
+    uBtn.style.cssText = 'flex:1;padding:10px;border-radius:8px;border:2px solid var(--teal);background:var(--teal);color:#fff;font-size:13px;font-weight:700;cursor:pointer';
+    sBtn.style.cssText = 'flex:1;padding:10px;border-radius:8px;border:2px solid var(--border);background:#fff;color:var(--grey);font-size:13px;font-weight:700;cursor:pointer';
   }
-  // Clear client selection and repopulate
+
+  // Clear client and repopulate
   const sel = document.getElementById('f-client');
-  if (sel) sel.value = '';
-  populateClientDropdown();
-  // Clear GPS banner
-  updateGPSBanner('', '');
+  if (sel) {
+    sel.value = '';
+    populateClientDropdown(null);
+  }
+  // Clear GPS
+  const banner = document.getElementById('gps-banner');
+  if (banner) banner.innerHTML = '';
+  document.getElementById('client-info-card').style.display = 'none';
 }
 
 function getMyClients() {
@@ -1075,45 +1090,49 @@ function openLogForm(clientName) {
   // Populate client dropdown
   const sel = document.getElementById('f-client');
   if (!sel) return;
+
+  const visitType = getMobVisitType();
+  const current = sel.value; // preserve current selection if any
+
   sel.innerHTML = '<option value="">— Select client —</option>';
 
-  let clientList;
-  if (MOB_VISIT_TYPE === 'unscheduled') {
-    // All clients regardless of team
-    clientList = [...new Set(CLIENTS.map(c => c.client))].sort();
-    clientList.forEach(name => {
+  if (visitType === 'unscheduled') {
+    // All clients regardless of team - sort alphabetically
+    const allClients = [...new Set(CLIENTS.map(c => c.client))].sort();
+    allClients.forEach(name => {
       const o = document.createElement('option');
-      o.value = name; o.textContent = name; sel.appendChild(o);
+      o.value = name; o.textContent = name;
+      if (name === (clientName || current)) o.selected = true;
+      sel.appendChild(o);
     });
   } else {
-    // Only team's clients (scheduled)
+    // Only this team's clients
     const myClients = getMyClients();
-    if (myClients.length) {
-      myClients.forEach(c => {
-        const o = document.createElement('option');
-        o.value = c.client; o.textContent = c.client; sel.appendChild(o);
-      });
-    } else {
-      // Fallback: show all if no team clients found
-      CLIENTS.forEach(c => {
-        const o = document.createElement('option');
-        o.value = c.client; o.textContent = c.client; sel.appendChild(o);
-      });
-    }
+    const clientsToShow = myClients.length ? myClients : CLIENTS;
+    clientsToShow.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.client; o.textContent = c.client;
+      if (c.client === (clientName || current)) o.selected = true;
+      sel.appendChild(o);
+    });
   }
 
   if (clientName) {
     sel.value = clientName;
     onClientChange(clientName);
+  } else if (current && sel.value === current) {
+    onClientChange(current);
   } else {
     document.getElementById('f-bike').value = '';
-    document.getElementById('client-info-card').style.display = 'none';
-    document.getElementById('sched-match').style.display = 'none';
+    const infoCard = document.getElementById('client-info-card');
+    if (infoCard) infoCard.style.display = 'none';
+    const schedMatch = document.getElementById('sched-match');
+    if (schedMatch) schedMatch.style.display = 'none';
   }
 
   // Show GPS status
   renderGPSBox();
-  if (clientName && GPS_STATE.lat) checkGPSAgainstLock(clientName);
+  if ((clientName || sel.value) && GPS_STATE.lat) checkGPSAgainstLock(clientName || sel.value);
 
   setTab('log', null);
 }

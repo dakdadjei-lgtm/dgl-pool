@@ -668,6 +668,42 @@ function switchTab(tab, clientName) {
 // ═══════════════════════════════════════════════════════════════
 // SCHEDULE ENGINE
 // ═══════════════════════════════════════════════════════════════
+function populateClientDropdown(clientName) {
+  const sel = document.getElementById('f-client');
+  if (!sel) return;
+
+  const isUnscheduled = document.getElementById('f-unscheduled')?.checked || false;
+  sel.innerHTML = '<option value="">— Select client —</option>';
+
+  if (isUnscheduled) {
+    const all = [...new Set(CLIENTS.map(c => c.client))].filter(Boolean).sort();
+    all.forEach(name => {
+      const o = document.createElement('option');
+      o.value = name; o.textContent = name;
+      if (name === clientName) o.selected = true;
+      sel.appendChild(o);
+    });
+  } else {
+    const mine = getMyClients();
+    const list = mine.length ? mine : CLIENTS;
+    list.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.client; o.textContent = c.client;
+      if (c.client === clientName) o.selected = true;
+      sel.appendChild(o);
+    });
+  }
+
+  if (clientName) {
+    sel.value = clientName;
+    onClientChange(clientName);
+  } else {
+    document.getElementById('f-bike').value = '';
+    const card = document.getElementById('client-info-card');
+    if (card) card.style.display = 'none';
+  }
+}
+
 function getMyClients() {
   return CLIENTS.filter(c => 
     c.team === APP.team || 
@@ -1045,33 +1081,7 @@ function openLogForm(clientName) {
   document.getElementById('f-ti').value   = now.toTimeString().slice(0,5);
   document.getElementById('f-to').value   = '';
 
-  // Populate client dropdown
-  const sel = document.getElementById('f-client');
-  if (!sel) return;
-
-  const isUnscheduled = document.getElementById('f-unscheduled')?.checked;
-  sel.innerHTML = '<option value="">— Select client —</option>';
-
-  if (isUnscheduled) {
-    // All clients from full list
-    const all = [...new Set(CLIENTS.map(c => c.client))].filter(Boolean).sort();
-    all.forEach(name => {
-      const o = document.createElement('option');
-      o.value = name; o.textContent = name;
-      if (name === clientName) o.selected = true;
-      sel.appendChild(o);
-    });
-  } else {
-    // Only team's assigned clients
-    const mine = getMyClients();
-    const list = mine.length ? mine : CLIENTS;
-    list.forEach(c => {
-      const o = document.createElement('option');
-      o.value = c.client; o.textContent = c.client;
-      if (c.client === clientName) o.selected = true;
-      sel.appendChild(o);
-    });
-  }
+    populateClientDropdown(clientName);
 
   if (clientName) {
     sel.value = clientName;

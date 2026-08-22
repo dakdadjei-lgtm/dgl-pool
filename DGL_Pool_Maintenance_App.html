@@ -295,6 +295,18 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
       <!-- Visit details -->
       <div class="form-sec">
         <h4>📍 Visit Details</h4>
+        <!-- Visit type toggle -->
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button id="mob-type-sched" onclick="setMobVisitType('scheduled')"
+            style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--navy);background:var(--navy);color:#fff;font-size:13px;font-weight:700;cursor:pointer">
+            📅 Scheduled
+          </button>
+          <button id="mob-type-unsched" onclick="setMobVisitType('unscheduled')"
+            style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--border);background:#fff;color:var(--grey);font-size:13px;font-weight:700;cursor:pointer">
+            🔧 Unscheduled
+          </button>
+        </div>
+
         <div class="f">
           <label>Client <span style="color:var(--red)">*</span></label>
           <select id="f-client" style="font-size:16px;padding:13px 12px" onchange="onClientChange(this.value)">
@@ -662,6 +674,27 @@ function switchTab(tab, clientName) {
 // ═══════════════════════════════════════════════════════════════
 // SCHEDULE ENGINE
 // ═══════════════════════════════════════════════════════════════
+let MOB_VISIT_TYPE = 'scheduled';
+
+function setMobVisitType(type) {
+  MOB_VISIT_TYPE = type;
+  const sBtn = document.getElementById('mob-type-sched');
+  const uBtn = document.getElementById('mob-type-unsched');
+  if (type === 'scheduled') {
+    sBtn.style.background = 'var(--navy)'; sBtn.style.color = '#fff'; sBtn.style.borderColor = 'var(--navy)';
+    uBtn.style.background = '#fff'; uBtn.style.color = 'var(--grey)'; uBtn.style.borderColor = 'var(--border)';
+  } else {
+    uBtn.style.background = 'var(--teal)'; uBtn.style.color = '#fff'; uBtn.style.borderColor = 'var(--teal)';
+    sBtn.style.background = '#fff'; sBtn.style.color = 'var(--grey)'; sBtn.style.borderColor = 'var(--border)';
+  }
+  // Clear client selection and repopulate
+  const sel = document.getElementById('f-client');
+  if (sel) sel.value = '';
+  populateClientDropdown();
+  // Clear GPS banner
+  updateGPSBanner('', '');
+}
+
 function getMyClients() {
   return CLIENTS.filter(c => 
     c.team === APP.team || 
@@ -1041,18 +1074,32 @@ function openLogForm(clientName) {
 
   // Populate client dropdown
   const sel = document.getElementById('f-client');
-  const myClients = getMyClients();
+  if (!sel) return;
   sel.innerHTML = '<option value="">— Select client —</option>';
-  myClients.forEach(c => {
-    const o = document.createElement('option');
-    o.value = c.client; o.textContent = c.client; sel.appendChild(o);
-  });
-  // If fallback needed (no clients for team)
-  if (!myClients.length) {
-    CLIENTS.forEach(c => {
+
+  let clientList;
+  if (MOB_VISIT_TYPE === 'unscheduled') {
+    // All clients regardless of team
+    clientList = [...new Set(CLIENTS.map(c => c.client))].sort();
+    clientList.forEach(name => {
       const o = document.createElement('option');
-      o.value = c.client; o.textContent = c.client; sel.appendChild(o);
+      o.value = name; o.textContent = name; sel.appendChild(o);
     });
+  } else {
+    // Only team's clients (scheduled)
+    const myClients = getMyClients();
+    if (myClients.length) {
+      myClients.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c.client; o.textContent = c.client; sel.appendChild(o);
+      });
+    } else {
+      // Fallback: show all if no team clients found
+      CLIENTS.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c.client; o.textContent = c.client; sel.appendChild(o);
+      });
+    }
   }
 
   if (clientName) {

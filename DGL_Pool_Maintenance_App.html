@@ -201,13 +201,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
       <select id="l-name">
 
         <option value="">Select your name...</option>
-        <option>Abraham Bortequaye</option>
-        <option>Agyenim Boateng</option>
-        <option>Appiah Paddy</option>
-        <option>Daniel Azelivo</option>
-        <option>Joseph Borketey</option>
-        <option>Obed Adokwey</option>
-        <option>Stephen Buabeng</option>
+        <!-- populated by populateLoginNames() -->
       </select>
     </div>
     <div class="f">
@@ -539,6 +533,36 @@ let LOG_CACHE   = JSON.parse(localStorage.getItem('dgl_logs')||'[]');
 // ═══════════════════════════════════════════════════════════════
 // STARTUP
 // ═══════════════════════════════════════════════════════════════
+// Active maintenance staff — sync with dashboard staff management
+let MOB_STAFF = JSON.parse(localStorage.getItem('dgl_mob_staff') || JSON.stringify([
+  {name:'Abraham Bortequaye', active:true},
+  {name:'Agyenim Boateng',    active:true},
+  {name:'Appiah Paddy',       active:true},
+  {name:'Daniel Azelivo',     active:true},
+  {name:'Joseph Borketey',    active:true},
+  {name:'Obed Adokwey',       active:true},
+  {name:'Stephen Buabeng',    active:true},
+  {name:'Eric Sampong',       active:false}, // Sales - not maintenance
+]));
+
+function populateLoginNames() {
+  const sel = document.getElementById('l-name');
+  if (!sel) return;
+  const active = MOB_STAFF.filter(s => s.active);
+  sel.innerHTML = '<option value="">Select your name...</option>' +
+    active.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+  // Restore saved name if still active
+  const saved = localStorage.getItem('dgl_session_v2');
+  if (saved) {
+    try {
+      const session = JSON.parse(saved);
+      if (session.name && active.find(s => s.name === session.name)) {
+        sel.value = session.name;
+      }
+    } catch(e) {}
+  }
+}
+
 window.addEventListener('load', () => {
   // Safely restore client updates from localStorage
   try {
@@ -573,6 +597,7 @@ window.addEventListener('load', () => {
     }
   } catch(e) { localStorage.removeItem('dgl_session_v2'); }
 
+  populateLoginNames();
   show('sc-login');
 });
 

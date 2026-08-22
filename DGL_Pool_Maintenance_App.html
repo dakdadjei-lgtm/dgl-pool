@@ -295,20 +295,14 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
       <!-- Visit details -->
       <div class="form-sec">
         <h4>📍 Visit Details</h4>
-        <!-- Visit type toggle -->
-        <div style="display:flex;gap:8px;margin-bottom:12px">
-          <button id="mob-type-sched" onclick="setMobVisitType('scheduled')"
-            style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--navy);background:var(--navy);color:#fff;font-size:13px;font-weight:700;cursor:pointer">
-            📅 Scheduled
-          </button>
-          <button id="mob-type-unsched" onclick="setMobVisitType('unscheduled')"
-            style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--border);background:#fff;color:var(--grey);font-size:13px;font-weight:700;cursor:pointer">
-            🔧 Unscheduled
-          </button>
-        </div>
-
         <div class="f">
-          <label>Client <span style="color:var(--red)">*</span></label>
+          <label style="display:flex;justify-content:space-between;align-items:center">
+            <span>Client <span style="color:var(--red)">*</span></span>
+            <label style="font-size:11px;font-weight:400;cursor:pointer;display:flex;align-items:center;gap:4px">
+              <input type="checkbox" id="f-unscheduled" onchange="populateClientDropdown(null)">
+              Unscheduled visit
+            </label>
+          </label>
           <select id="f-client" style="font-size:16px;padding:13px 12px" onchange="onClientChange(this.value)">
             <option value="">— Tap to select client —</option>
           </select>
@@ -674,42 +668,6 @@ function switchTab(tab, clientName) {
 // ═══════════════════════════════════════════════════════════════
 // SCHEDULE ENGINE
 // ═══════════════════════════════════════════════════════════════
-function getMobVisitType() {
-  // Read directly from button state - single source of truth
-  const sBtn = document.getElementById('mob-type-sched');
-  if (!sBtn) return 'scheduled';
-  return sBtn.dataset.active === 'true' ? 'scheduled' : 'unscheduled';
-}
-
-function setMobVisitType(type) {
-  const sBtn = document.getElementById('mob-type-sched');
-  const uBtn = document.getElementById('mob-type-unsched');
-  if (!sBtn || !uBtn) return;
-
-  if (type === 'scheduled') {
-    sBtn.dataset.active = 'true';
-    uBtn.dataset.active = 'false';
-    sBtn.style.cssText = 'flex:1;padding:10px;border-radius:8px;border:2px solid var(--navy);background:var(--navy);color:#fff;font-size:13px;font-weight:700;cursor:pointer';
-    uBtn.style.cssText = 'flex:1;padding:10px;border-radius:8px;border:2px solid var(--border);background:#fff;color:var(--grey);font-size:13px;font-weight:700;cursor:pointer';
-  } else {
-    sBtn.dataset.active = 'false';
-    uBtn.dataset.active = 'true';
-    uBtn.style.cssText = 'flex:1;padding:10px;border-radius:8px;border:2px solid var(--teal);background:var(--teal);color:#fff;font-size:13px;font-weight:700;cursor:pointer';
-    sBtn.style.cssText = 'flex:1;padding:10px;border-radius:8px;border:2px solid var(--border);background:#fff;color:var(--grey);font-size:13px;font-weight:700;cursor:pointer';
-  }
-
-  // Clear client and repopulate
-  const sel = document.getElementById('f-client');
-  if (sel) {
-    sel.value = '';
-    populateClientDropdown(null);
-  }
-  // Clear GPS
-  const banner = document.getElementById('gps-banner');
-  if (banner) banner.innerHTML = '';
-  document.getElementById('client-info-card').style.display = 'none';
-}
-
 function getMyClients() {
   return CLIENTS.filter(c => 
     c.team === APP.team || 
@@ -1091,28 +1049,26 @@ function openLogForm(clientName) {
   const sel = document.getElementById('f-client');
   if (!sel) return;
 
-  const visitType = getMobVisitType();
-  const current = sel.value; // preserve current selection if any
-
+  const isUnscheduled = document.getElementById('f-unscheduled')?.checked;
   sel.innerHTML = '<option value="">— Select client —</option>';
 
-  if (visitType === 'unscheduled') {
-    // All clients regardless of team - sort alphabetically
-    const allClients = [...new Set(CLIENTS.map(c => c.client))].sort();
-    allClients.forEach(name => {
+  if (isUnscheduled) {
+    // All clients from full list
+    const all = [...new Set(CLIENTS.map(c => c.client))].filter(Boolean).sort();
+    all.forEach(name => {
       const o = document.createElement('option');
       o.value = name; o.textContent = name;
-      if (name === (clientName || current)) o.selected = true;
+      if (name === clientName) o.selected = true;
       sel.appendChild(o);
     });
   } else {
-    // Only this team's clients
-    const myClients = getMyClients();
-    const clientsToShow = myClients.length ? myClients : CLIENTS;
-    clientsToShow.forEach(c => {
+    // Only team's assigned clients
+    const mine = getMyClients();
+    const list = mine.length ? mine : CLIENTS;
+    list.forEach(c => {
       const o = document.createElement('option');
       o.value = c.client; o.textContent = c.client;
-      if (c.client === (clientName || current)) o.selected = true;
+      if (c.client === clientName) o.selected = true;
       sel.appendChild(o);
     });
   }
@@ -1120,20 +1076,14 @@ function openLogForm(clientName) {
   if (clientName) {
     sel.value = clientName;
     onClientChange(clientName);
-  } else if (current && sel.value === current) {
-    onClientChange(current);
   } else {
     document.getElementById('f-bike').value = '';
-    const infoCard = document.getElementById('client-info-card');
-    if (infoCard) infoCard.style.display = 'none';
-    const schedMatch = document.getElementById('sched-match');
-    if (schedMatch) schedMatch.style.display = 'none';
+    const card = document.getElementById('client-info-card');
+    if (card) card.style.display = 'none';
   }
 
-  // Show GPS status
   renderGPSBox();
-  if ((clientName || sel.value) && GPS_STATE.lat) checkGPSAgainstLock(clientName || sel.value);
-
+  if (clientName && GPS_STATE.lat) checkGPSAgainstLock(clientName);
   setTab('log', null);
 }
 

@@ -1407,6 +1407,23 @@ async function syncAll() {
     if (j.ok && j.data) {
       SCHEDULE = j.data;
       localStorage.setItem('dgl_schedule', JSON.stringify(SCHEDULE));
+      // SCHEDULE is object keyed by client name with team + days
+      // Use it to update CLIENTS with correct team assignments and schedule days
+      Object.entries(SCHEDULE).forEach(([clientName, sched]) => {
+        let idx = CLIENTS.findIndex(c => c.client === clientName);
+        if (idx < 0) {
+          // New client not in our list - add it
+          CLIENTS.push({ client: clientName, team: sched.team||'', scheduleDays: sched.days });
+          idx = CLIENTS.length - 1;
+        }
+        CLIENTS[idx].team         = sched.team || CLIENTS[idx].team || '';
+        CLIENTS[idx].scheduleDays = (sched.days && sched.days.length) ? sched.days : CLIENTS[idx].scheduleDays;
+        CLIENTS[idx].frequency    = sched.frequency || CLIENTS[idx].frequency;
+        CLIENTS[idx].monthlyCharge  = sched.monthlyCharge  || CLIENTS[idx].monthlyCharge;
+        CLIENTS[idx].chargePerVisit = sched.chargePerVisit || CLIENTS[idx].chargePerVisit;
+      });
+      // Re-render home immediately with correct assignments
+      try { renderHomeSchedule(); } catch(e) {}
     }
   } catch(e) {}
   // Pull full client list from Maintenance_Schedule sheet
@@ -1475,6 +1492,9 @@ async function syncAll() {
           if (si >= 0) SCHEDULE[si].scheduleDays = c.scheduleDays;
         }
       });
+      // Re-render home and schedule with updated client assignments
+      try { renderHomeSchedule(); } catch(e) {}
+      try { renderScheduleDay(new Date().toISOString().slice(0,10)); } catch(e) {}
       // Refresh client dropdown if on log tab
       const sel = document.getElementById('f-client');
       if (sel) populateClientDropdown();

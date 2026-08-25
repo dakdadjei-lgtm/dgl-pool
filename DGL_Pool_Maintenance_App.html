@@ -84,7 +84,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
 .stat-card.red .stat-num{color:var(--red)}
 
 /* Schedule visit cards */
-.visit-card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);margin-bottom:10px;overflow:hidden;border-left:4px solid var(--border)}
+.visit-card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);margin-bottom:10px;overflow:hidden;border-left:4px solid var(--border);cursor:pointer}
 .visit-card.scheduled{border-left-color:var(--teal)}
 .visit-card.done{border-left-color:var(--green)}
 .visit-card.missed{border-left-color:var(--red)}
@@ -654,6 +654,7 @@ async function doLogin() {
     const bike = myClients.length ? (myClients[0].bike||'') : '';
     APP.name = name; APP.url = url; APP.team = name; APP.bike = bike;
     localStorage.setItem('dgl_session_v2', JSON.stringify({name, url, team:name, bike}));
+    if (url) localStorage.setItem('dgl_last_url', url);
     if (url && url.includes('script.google.com')) {
       showSpinner('Connecting...');
       try {
@@ -1581,6 +1582,11 @@ function signOut() {
   if (!confirm('Sign out?')) return;
   localStorage.removeItem('dgl_session_v2');
   APP.name = ''; APP.url = ''; APP.team = ''; APP.bike = '';
+  populateLoginNames();
+  const urlEl = document.getElementById('l-url');
+  // Keep URL pre-filled from saved settings
+  const savedUrl = localStorage.getItem('dgl_last_url');
+  if (urlEl && savedUrl) urlEl.value = savedUrl;
   show('sc-login');
 }
 

@@ -738,16 +738,19 @@ function getMyClients() {
 
 function getScheduleForDate(dateStr) {
   // Returns clients scheduled for this date
-  const d = new Date(dateStr + 'T00:00:00');
-  const dow = d.getDay(); // 0=Sun, 1=Mon ... 6=Sat
+  const d = new Date(dateStr + 'T12:00:00'); // use noon to avoid DST issues
+  const dow = d.getDay(); // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
   const myClients = getMyClients();
   return myClients.filter(c => {
-    // Check if we have a schedule override from the dashboard
-    const key = c.client;
-    if (SCHEDULE[key] && SCHEDULE[key].days) {
-      return SCHEDULE[key].days.includes(dow);
+    // Priority 1: Use scheduleDays from CLIENTS array (synced from Sheets)
+    if (c.scheduleDays && c.scheduleDays.length > 0) {
+      return c.scheduleDays.includes(dow);
     }
-    // Use default from frequency
+    // Priority 2: Check SCHEDULE override from server
+    if (SCHEDULE[c.client] && SCHEDULE[c.client].days) {
+      return SCHEDULE[c.client].days.includes(dow);
+    }
+    // Priority 3: Fall back to FREQ_MAP default
     const fm = FREQ_MAP[c.frequency];
     return fm ? fm.days.includes(dow) : false;
   });

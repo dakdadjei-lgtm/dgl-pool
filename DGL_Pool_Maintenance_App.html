@@ -756,6 +756,7 @@ function populateClientDropdown(clientName) {
 function getMyClients() {
   const myTeam = (APP.team||'').toLowerCase().trim();
   if (!myTeam) return [];
+  console.log('SCHEDULE keys:', Object.keys(SCHEDULE).length, 'first entry:', JSON.stringify(Object.values(SCHEDULE)[0]||null).slice(0,100));
 
   // Primary: use SCHEDULE (from getSchedule API call) - always current
   if (SCHEDULE && Object.keys(SCHEDULE).length > 0) {
@@ -1464,6 +1465,29 @@ async function syncAll() {
       body: JSON.stringify({action:'getSheet', sheet:'Maintenance_Schedule', limit:300})});
     const j = await r.json();
     const rows = j.ok ? (j.data?.rows || j.rows || []) : [];
+    // Build SCHEDULE from these rows (more reliable than getSchedule action)
+    if (rows.length) {
+      const newSched = {};
+      rows.forEach(row => {
+        const name = (row['Client Name']||Object.values(row)[0]||'').trim();
+        const team = (row['Team']||Object.values(row)[1]||'').trim();
+        if (!name || !team) return;
+        let days = [1,4];
+        try { const p=JSON.parse(row['Schedule Days']||'[1,4]'); if(Array.isArray(p)&&p.length) days=p; } catch(e){}
+        newSched[name] = {
+          team, days,
+          frequency: row['Frequency']||'Twice Per Week',
+          visitsPerMonth: parseInt(row['Visits Per Month'])||4,
+          monthlyCharge:  parseFloat(row['Monthly Charge GHS'])||0,
+          chargePerVisit: parseFloat(row['Charge Per Visit GHS'])||0,
+        };
+      });
+      if (Object.keys(newSched).length > 0) {
+        SCHEDULE = newSched;
+        localStorage.setItem('dgl_schedule', JSON.stringify(SCHEDULE));
+        renderHomeSchedule();
+      }
+    }
     if (rows.length) {
       // Merge Sheets clients into CLIENTS array
       rows.forEach(row => {

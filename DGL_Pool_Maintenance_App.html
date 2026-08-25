@@ -612,12 +612,11 @@ window.addEventListener('load', () => {
       if (s.url  && urlEl)  urlEl.value  = s.url;
       if (s.name && nameEl) nameEl.value = s.name;
       // Auto-login if valid session
-      if (s.name && s.url) {
-        Object.assign(APP, s);
-        show('sc-main');
-        setTimeout(function(){ initApp(); syncAll(); }, 150);
-        return;
-      }
+      // Pre-fill fields but don't auto-login - always show login screen
+      const urlEl2 = document.getElementById('l-url');
+      const nameEl2 = document.getElementById('l-name');
+      if (s.url  && urlEl2)  urlEl2.value  = s.url;
+      if (s.name && nameEl2) nameEl2.value = s.name;
     }
   } catch(e) { localStorage.removeItem('dgl_session_v2'); }
 
@@ -838,7 +837,7 @@ function renderHomeSchedule() {
     const statusClass = done2 ? 'done' : 'scheduled';
     const icon = done2 ? '✅' : '🏊';
     const iconClass = done2 ? 'done' : 'sched';
-    return `<div class="visit-card ${statusClass}" data-client="${c.client}" data-done="${done2}">
+    return `<div class="visit-card ${statusClass}" data-client="${c.client}" data-done="${done2 ? '1' : '0'}">
       <div class="vc-body">
         <div class="vc-icon ${iconClass}">${icon}</div>
         <div class="vc-info">
@@ -855,6 +854,15 @@ function renderHomeSchedule() {
       </div>
     </div>`;
   }).join('');
+
+  // Wire up click handler
+  container.onclick = function(e) {
+    const card = e.target.closest('.visit-card');
+    if (!card) return;
+    if (card.getAttribute('data-done') === '1') return;
+    const name = card.getAttribute('data-client');
+    if (name) openLogForm(name);
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════

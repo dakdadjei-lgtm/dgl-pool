@@ -564,6 +564,14 @@ function populateLoginNames() {
 }
 
 window.addEventListener('load', () => {
+  // Restore SCHEDULE from localStorage so schedule shows before sync
+  try {
+    const savedSched = localStorage.getItem('dgl_schedule');
+    if (savedSched) {
+      const s = JSON.parse(savedSched);
+      if (s && Object.keys(s).length > 0) SCHEDULE = s;
+    }
+  } catch(e) {}
   // Clear stale client cache if version changed (forces fresh sync)
   const cacheVer = localStorage.getItem('dgl_clients_ver');
   if (cacheVer !== '3') {
@@ -747,17 +755,40 @@ function populateClientDropdown(clientName) {
 
 function getMyClients() {
   const myTeam = (APP.team||'').toLowerCase().trim();
-  return CLIENTS.filter(c => 
+  if (!myTeam) return [];
+
+  // Primary: use SCHEDULE (from getSchedule API call) - always current
+  if (SCHEDULE && Object.keys(SCHEDULE).length > 0) {
+    const fromSchedule = Object.entries(SCHEDULE)
+      .filter(([name, s]) => (s.team||'').toLowerCase().trim() === myTeam)
+      .map(([name, s]) => {
+        // Merge with CLIENTS to get full client object
+        const existing = CLIENTS.find(c => c.client.toLowerCase() === name.toLowerCase());
+        return Object.assign({}, existing || {client: name}, {
+          client: name,
+          team: s.team,
+          scheduleDays: s.days || existing?.scheduleDays || [1,4],
+          frequency: s.frequency || existing?.frequency || 'Twice Per Week',
+          monthlyCharge: s.monthlyCharge || existing?.monthlyCharge || 0,
+          chargePerVisit: s.chargePerVisit || existing?.chargePerVisit || 0,
+        });
+      })
+      .sort((a,b) => a.client.localeCompare(b.client));
+    if (fromSchedule.length > 0) return fromSchedule;
+  }
+
+  // Fallback: use CLIENTS array team field
+  return CLIENTS.filter(c =>
     (c.team||'').toLowerCase().trim() === myTeam
   ).sort((a,b) => a.client.localeCompare(b.client));
 }
 
 function getScheduleForDate(dateStr) {
   // Returns clients scheduled for this date
-  const d = new Date(dateStr + 'T12:00:00'); // use noon to avoid DST issues
-  const dow = d.getDay(); // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+  const d = new Date(dateStr + 'T12:00:00');
+  const dow = d.getDay();
   const myClients = getMyClients();
-  return myClients.filter(c => {
+  const result = myClients.filter(c => {
     // Priority 1: Use scheduleDays from CLIENTS array (synced from Sheets)
     if (c.scheduleDays && c.scheduleDays.length > 0) {
       return c.scheduleDays.includes(dow);
@@ -770,6 +801,7 @@ function getScheduleForDate(dateStr) {
     const fm = FREQ_MAP[c.frequency];
     return fm ? fm.days.includes(dow) : false;
   });
+  return result;
 }
 
 function isLoggedToday(clientName, dateStr) {

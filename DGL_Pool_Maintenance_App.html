@@ -837,8 +837,7 @@ function renderHomeSchedule() {
     const statusClass = done2 ? 'done' : 'scheduled';
     const icon = done2 ? '✅' : '🏊';
     const iconClass = done2 ? 'done' : 'sched';
-    const safeClient = c.client.replace(/'/g,"\'");
-    return `<div class="visit-card ${statusClass}" onclick="${done2 ? '' : 'openLogForm(\''+safeClient+'\')'}">
+    return `<div class="visit-card ${statusClass}" data-client="${c.client}" data-done="${done2}">
       <div class="vc-body">
         <div class="vc-icon ${iconClass}">${icon}</div>
         <div class="vc-info">

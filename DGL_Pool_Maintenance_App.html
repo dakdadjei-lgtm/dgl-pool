@@ -857,11 +857,17 @@ function renderHomeSchedule() {
 
   // Wire up click handler
   container.onclick = function(e) {
-    const card = e.target.closest('.visit-card');
-    if (!card) return;
-    if (card.getAttribute('data-done') === '1') return;
-    const name = card.getAttribute('data-client');
-    if (name) openLogForm(name);
+    try {
+      const card = e.target.closest('.visit-card');
+      if (!card) return;
+      if (card.getAttribute('data-done') === '1') return;
+      const name = card.getAttribute('data-client');
+      if (!name) return;
+      alert('Tapped: ' + name);
+      openLogForm(name);
+    } catch(err) {
+      alert('Click error: ' + err.message);
+    }
   };
 }
 

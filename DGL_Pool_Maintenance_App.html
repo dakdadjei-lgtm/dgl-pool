@@ -857,17 +857,11 @@ function renderHomeSchedule() {
 
   // Wire up click handler
   container.onclick = function(e) {
-    try {
-      const card = e.target.closest('.visit-card');
-      if (!card) return;
-      if (card.getAttribute('data-done') === '1') return;
-      const name = card.getAttribute('data-client');
-      if (!name) return;
-      alert('Tapped: ' + name);
-      openLogForm(name);
-    } catch(err) {
-      alert('Click error: ' + err.message);
-    }
+    const card = e.target.closest('.visit-card');
+    if (!card) return;
+    if (card.getAttribute('data-done') === '1') return;
+    const name = card.getAttribute('data-client');
+    if (name) openLogForm(name);
   };
 }
 
@@ -1173,20 +1167,12 @@ function openLogForm(clientName) {
   document.getElementById('f-ti').value   = now.toTimeString().slice(0,5);
   document.getElementById('f-to').value   = '';
 
-    populateClientDropdown(clientName);
-
-  if (clientName) {
-    sel.value = clientName;
-    onClientChange(clientName);
-  } else {
-    document.getElementById('f-bike').value = '';
-    const card = document.getElementById('client-info-card');
-    if (card) card.style.display = 'none';
-  }
-
+  // Show log tab FIRST so DOM elements exist
+  setTab('log', null);
+  // Now populate client dropdown (f-client element now exists)
+  populateClientDropdown(clientName);
   renderGPSBox();
   if (clientName && GPS_STATE.lat) checkGPSAgainstLock(clientName);
-  setTab('log', null);
 }
 
 function onClientChange(clientName) {

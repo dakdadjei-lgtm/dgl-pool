@@ -545,6 +545,23 @@ let MOB_STAFF = JSON.parse(localStorage.getItem('dgl_mob_staff') || JSON.stringi
   {name:'Eric Sampong',       active:false}, // Sales - not maintenance
 ]));
 
+// Pull the shared staff list from Google Sheets so new technicians appear without touching each phone
+async function loadStaffFromSheet(url) {
+  url = (url || '').trim();
+  if (!url) return;
+  try {
+    const r = await fetch(url, {method:'POST', cache:'no-store', body: JSON.stringify({action:'getStaff'})});
+    const j = await r.json();
+    if (!j.ok || !Array.isArray(j.data) || !j.data.length) return;
+    const keep = document.getElementById('l-name') ? document.getElementById('l-name').value : '';
+    MOB_STAFF = j.data.filter(s => /maintenance/i.test(s.role||'')).map(s => ({name:s.name, active:!!s.active}));
+    localStorage.setItem('dgl_mob_staff', JSON.stringify(MOB_STAFF));
+    populateLoginNames();
+    const sel = document.getElementById('l-name');
+    if (sel && keep && MOB_STAFF.find(s => s.active && s.name === keep)) sel.value = keep;
+  } catch(e) { console.log('Staff load failed:', e.message); }
+}
+
 function populateLoginNames() {
   const sel = document.getElementById('l-name');
   if (!sel) return;
@@ -622,6 +639,8 @@ window.addEventListener('load', () => {
 
   populateLoginNames();
   show('sc-login');
+  const _u = document.getElementById('l-url');
+  if (_u) { loadStaffFromSheet(_u.value); _u.addEventListener('change', () => loadStaffFromSheet(_u.value)); }
 });
 
 window.addEventListener('online',  () => { flushQueue(); syncAll(); });
